@@ -78,14 +78,9 @@ body {
 
 .masthead h1 {
   margin: 0 0 4px;
-  /* Bebas Neue is uppercase-only, so it renders the title in caps by design. */
-  font-family: 'Bebas Neue', 'Archivo', system-ui, sans-serif;
-  font-weight: 400;
-  /* Condensed and all-caps, so it needs more size and a little tracking to
-     carry the same weight Archivo Black did. */
-  font-size: 1.75rem;
-  letter-spacing: 0.02em;
-  line-height: 1.05;
+  font-family: 'Archivo Black', 'Archivo', system-ui, sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: -0.01em;
 }
 
 .masthead p {
@@ -149,7 +144,7 @@ body {
 
   .masthead h1 {
     margin-bottom: 6px;
-    font-size: 2.4rem;
+    font-size: 1.6rem;
   }
 
   .masthead p {
@@ -239,8 +234,8 @@ body {
   z-index: 3;
   background: var(--blue);
   color: var(--head-text);
-  font-family: 'Bebas Neue', 'Archivo', system-ui, sans-serif;
-  letter-spacing: 0.08em;
+  font-family: 'Archivo Black', 'Archivo', system-ui, sans-serif;
+  letter-spacing: 0.1em;
 }
 
 .head .cell {
@@ -252,9 +247,7 @@ body {
   /* Top padding clears the safety pins, which overlay the strip's corners. */
   padding: 21px 4px 10px;
   background: var(--blue);
-  /* Bebas Neue runs small and narrow for its size, so the labels take a size up
-     from the Archivo Black they replaced. */
-  font-size: 0.78rem;
+  font-size: 0.6rem;
   line-height: 1.1;
 }
 

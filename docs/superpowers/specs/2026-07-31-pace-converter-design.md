@@ -172,11 +172,7 @@ header strip, and safety-pin dots at the plate's top corners.
   and the panel link on the dark plate (9.37:1). `--blue` is a *background*
   token and fails as body text on the dark plate, which is why links carry their
   own `--link`.
-- Type: Bebas Neue (title and column headings — condensed and uppercase-only,
-  which suits labels that were already caps and buys width in a narrow column),
-  Archivo (numerals + UI). The tape's figures stay in Archivo: a display face
-  has no tabular-figure support, and that is what stops 1,183 rows shimmering
-  as they scroll. Tabular
+- Type: Archivo Black (header/display), Archivo (numerals + UI), tabular
   figures throughout (`font-variant-numeric: tabular-nums`) so the tape doesn't
   shimmy while scrolling. Fonts self-hosted (no CDN request on load).
 - Columns as tape, no divider: the km column is white, the mile column carries
