@@ -108,6 +108,7 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--plate);
+  border-radius: 16px;
   overflow: hidden;
   /* Column widths — every row and the heading share them, so columns line up
      without any scroll syncing. Cells grow past these to fill a wide plate. */
@@ -142,7 +143,6 @@ body {
   }
 
   .plate {
-    border-radius: 16px;
     box-shadow: var(--shadow);
   }
 
