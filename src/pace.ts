@@ -1,9 +1,9 @@
 /** Kilometers per mile — the single conversion constant. */
 export const KM_PER_MI = 1.609344;
 
-/** Tape range: 1:30 min/km … 60:00 min/km in 5 s steps. */
+/** Tape range: 1:30 min/km … 20:00 min/km in 5 s steps. */
 export const MIN_SEC_PER_KM = 90;
-export const MAX_SEC_PER_KM = 3600;
+export const MAX_SEC_PER_KM = 1200;
 export const STEP_SEC = 5;
 
 /**

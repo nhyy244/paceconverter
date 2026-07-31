@@ -23,12 +23,12 @@ longer races. There is no input field, no convert button, and no selected value
 | Interaction model | Pure ruler (ELK style) — no center-line selection, no typing |
 | Gesture | Grab the tape and pull in any direction; no visible scrollbar |
 | Unit switching | None. Considered click-to-toggle km/mi and dropped it: a race time is a fact about the distance, so a toggle would only relabel distances |
-| Tape range | 1:30 → 60:00 min/km, hard stops at both ends |
-| Tape steps | Uniform 5 s steps (703 rows); 10 s rows styled "major", 5 s rows "minor" |
+| Tape range | 1:30 → 20:00 min/km, hard stops at both ends |
+| Tape steps | Uniform 5 s steps (223 rows); 10 s rows styled "major", 5 s rows "minor" |
 | Stack | Vite + vanilla TypeScript (chosen over Angular for load performance) |
 | Backend | None — all computation client-side |
 | Deployment | Vercel (`vercel.json`); a Docker/nginx image serves the same build anywhere else, with headers kept in step |
-| Telemetry | None in v1 |
+| Telemetry | Vercel Web Analytics and Speed Insights, injected in production builds only. Both are same-origin under `/_vercel`, which is why `connect-src` is `'self'` |
 
 ## Architecture
 
@@ -56,7 +56,7 @@ index.html
   hours unit — pace is conventionally read in minutes even when large.
 - Finish-time formatting scales to the distance: `m:ss` under an hour, `h:mm:ss`
   under a day, `Dd Hh` beyond — which is how a 200-miler's time is quoted anyway.
-  The slowest row on the longest course reads `20d 3h`.
+  The slowest row on the longest course reads `6d 17h`.
 - All functions are pure and independently testable.
 
 ### Races (`races.ts`)
@@ -75,11 +75,11 @@ rather than implying a fixed distance. Worth re-checking before each season.
 
 ### Tape (`tape.ts`)
 
-- Row data derived from a range config: `{ minSecPerKm: 90, maxSecPerKm: 3600, stepSec: 5 }`
-  → 703 rows. Config is a constant but kept as an explicit parameter so range
+- Row data derived from a range config: `{ minSecPerKm: 90, maxSecPerKm: 1200, stepSec: 5 }`
+  → 223 rows. Config is a constant but kept as an explicit parameter so range
   or step changes are one-line edits.
 - All rows are rendered eagerly into one native scroll container. No virtual
-  scrolling: ~700 rows × 13 text cells is well within mobile rendering budgets,
+  scrolling: ~220 rows × 13 text cells is well within mobile rendering budgets,
   and native scroll gives momentum/feel for free.
 - Each row is a flex row of fixed-width cells — `(min/km, min/mi, …races)`. Every
   row and the heading share the same widths, so columns line up with no scroll
@@ -145,9 +145,21 @@ hidden and the cursor is `grab`/`grabbing`.
 
 - **Touch is left to the browser.** Native panning already *is* this gesture and
   does it better: OS-matched momentum and rubber-banding at the ends.
+  Leaving it alone means *not binding at all* there, not binding and bailing
+  out: a cancellable `pointerdown` listener on the scroller makes Safari wait to
+  hear from it before it will scroll, which reads as lag on every swipe. So the
+  binding attaches only behind `(hover: hover) and (pointer: fine)`, and every
+  listener that never cancels is registered passive.
 - **Mouse and pen** get the same feel from a pointer binding: press records the
   scroll offset, movement re-derives it from the total distance pulled, and
   release hands the tracked velocity to a friction-decayed coast.
+- **On touch the horizontal axis snaps to column boundaries.** A two-axis
+  scroller has no directional lock, so a mostly-vertical swipe drifts sideways
+  and the columns wobble; snapping returns the drift and lands deliberate swipes
+  on a column. Confined to touch so it doesn't fight the mouse fling.
+- The document itself cannot scroll and has `overscroll-behavior: none`: iOS
+  rubber-bands a page that exactly fits the viewport, which otherwise dragged
+  the whole plate when the tape hit its end.
 - Release velocity comes from the samples of the last 100 ms, so a drag that
   came to rest doesn't fling; it is capped at 4 px/ms because coalesced pointer
   events can arrive a fraction of a millisecond apart.
@@ -209,7 +221,7 @@ concentrates in the domain math:
 
 - Rounding happens once, on the converted integer seconds — formatting integer
   seconds to `m:ss` can never produce `:60`.
-- Range endpoints (1:30 and 60:00) must appear as exact rows.
+- Range endpoints (1:30 and 20:00) must appear as exact rows.
 
 ## Testing
 
@@ -254,6 +266,6 @@ note, and they have now landed. What remains:
   length, which a picker would make moot.
 - Center-line selection and tap-to-type an exact pace.
 - Click-to-toggle km/mi units — considered and dropped; see the decisions log.
-- Telemetry, PWA/offline, persistence of scroll position.
+- PWA/offline, persistence of scroll position.
 
 All of these layer onto the row-as-tuple model without reworking what exists.

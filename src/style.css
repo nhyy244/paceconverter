@@ -42,8 +42,19 @@
   box-sizing: border-box;
 }
 
+html {
+  /* iOS rubber-bands the document even when it exactly fits the viewport, so
+     pulling the tape past its end drags the whole page with it. */
+  overscroll-behavior: none;
+  /* Landscape on iOS otherwise inflates the tape's figures out of alignment. */
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
+  /* The page itself never scrolls — only the tape inside it does. */
+  overflow: hidden;
+  overscroll-behavior: none;
   background: var(--paper);
   color: var(--ink);
   font-family: 'Archivo', system-ui, sans-serif;
@@ -225,6 +236,24 @@ body {
 .tape.dragging {
   cursor: grabbing;
   user-select: none;
+}
+
+/* Touch has no directional lock on a two-axis scroller, so a mostly-vertical
+   swipe drifts sideways and the columns wobble under your thumb. Snapping the
+   horizontal axis sends that drift back to the column you were reading, and
+   makes deliberate sideways moves land on a column instead of between two.
+   Confined to touch so it doesn't fight the mouse fling. */
+@media (hover: none) {
+  .tape {
+    scroll-snap-type: x mandatory;
+    /* The pinned pace column covers the left edge, so snap past it. */
+    scroll-padding-left: var(--pace-col);
+  }
+
+  /* Only the thirteen headings are snap targets. On cells it would be thousands. */
+  .head .cell {
+    scroll-snap-align: start;
+  }
 }
 
 .tape:focus-visible {

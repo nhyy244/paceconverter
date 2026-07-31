@@ -22,7 +22,7 @@ describe('kmToMiSeconds', () => {
 
   it('converts both tape endpoints', () => {
     expect(kmToMiSeconds(MIN_SEC_PER_KM)).toBe(145); // 90 × 1.609344 = 144.84096
-    expect(kmToMiSeconds(MAX_SEC_PER_KM)).toBe(5794); // 3600 × 1.609344 = 5793.6384
+    expect(kmToMiSeconds(MAX_SEC_PER_KM)).toBe(1931); // 1200 × 1.609344 = 1931.2128
   });
 });
 
@@ -57,8 +57,8 @@ describe('formatDuration', () => {
   it('switches to days and hours at a day', () => {
     expect(formatDuration(86_400)).toBe('1d 0h');
     expect(formatDuration(180_000)).toBe('2d 2h');
-    // The slowest row on the longest course: 60:00/km over 483.6 km.
-    expect(formatDuration(MAX_SEC_PER_KM * 483.6)).toBe('20d 3h');
+    // The slowest row on the longest course: 20:00/km over 483.6 km.
+    expect(formatDuration(MAX_SEC_PER_KM * 483.6)).toBe('6d 17h');
   });
 
   it('rounds to the nearest second', () => {

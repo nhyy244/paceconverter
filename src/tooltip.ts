@@ -109,7 +109,9 @@ export function enableInfoPanels(container: HTMLElement, scroller: HTMLElement):
   }
 
   container.addEventListener('click', onClick);
-  document.addEventListener('pointerdown', onPointerDown, true);
+  // Passive: it only ever closes a panel. Left cancellable, a document-level
+  // pointerdown listener makes the browser wait on it before scrolling.
+  document.addEventListener('pointerdown', onPointerDown, { capture: true, passive: true });
   document.addEventListener('keydown', onKeyDown);
   // The panel is anchored to a spot on screen, and the tape can move under it.
   scroller.addEventListener('scroll', close, { passive: true });
@@ -118,7 +120,7 @@ export function enableInfoPanels(container: HTMLElement, scroller: HTMLElement):
   return () => {
     close();
     container.removeEventListener('click', onClick);
-    document.removeEventListener('pointerdown', onPointerDown, true);
+    document.removeEventListener('pointerdown', onPointerDown, { capture: true });
     document.removeEventListener('keydown', onKeyDown);
     scroller.removeEventListener('scroll', close);
     window.removeEventListener('resize', close);

@@ -33,8 +33,8 @@ describe('buildRows', () => {
     // as a failure and not just a self-consistent tautology.
     expect(rows[0].kmLabel).toBe('1:30');
     expect(rows[0].miLabel).toBe('2:25');
-    expect(rows.at(-1)!.kmLabel).toBe('60:00');
-    expect(rows.at(-1)!.miLabel).toBe('96:34');
+    expect(rows.at(-1)!.kmLabel).toBe('20:00');
+    expect(rows.at(-1)!.miLabel).toBe('32:11');
   });
 
   it('steps by the configured interval', () => {
