@@ -1,15 +1,16 @@
 /** @vitest-environment happy-dom */
 import { describe, expect, it } from 'vitest';
+import { buildRows, DEFAULT_CONFIG } from './tape';
+import { RACES } from './races';
 import {
-  buildRows,
-  DEFAULT_CONFIG,
+  renderHeader,
   renderTape,
   initialScrollTop,
   centerRowInTape,
-} from './tape';
+} from './tape-dom';
 
 describe('renderTape', () => {
-  it('renders a two-cell grid row per tape row', () => {
+  it('renders a cell per column, pace units first', () => {
     const frag = renderTape(buildRows(DEFAULT_CONFIG).slice(0, 3));
     const rows = Array.from(frag.children) as HTMLElement[];
 
@@ -18,16 +19,89 @@ describe('renderTape', () => {
     expect(rows[1].className).toBe('row minor'); // 125 s
     expect(rows[0].dataset.secPerKm).toBe('120');
 
-    const [km, mi] = Array.from(rows[0].children) as HTMLElement[];
+    const cells = Array.from(rows[0].children) as HTMLElement[];
+    expect(cells).toHaveLength(2 + RACES.length);
+
+    const [km, mi] = cells;
     expect(km.className).toBe('cell km');
     expect(km.textContent).toBe('2:00');
     expect(mi.className).toBe('cell mi');
     expect(mi.textContent).toBe('3:13');
+
+    // 5K at 2:00/km, in the first race column.
+    expect(cells[2].className).toBe('cell race');
+    expect(cells[2].textContent).toBe('10:00');
   });
 
   it('renders the full default tape', () => {
     const frag = renderTape(buildRows(DEFAULT_CONFIG));
     expect(frag.children).toHaveLength(1177);
+  });
+});
+
+describe('renderHeader', () => {
+  function header(): HTMLElement {
+    const el = document.createElement('div');
+    el.append(renderHeader(RACES));
+    return el;
+  }
+
+  it('heads the two pace columns, then one column per race', () => {
+    const cells = Array.from(header().children) as HTMLElement[];
+
+    expect(cells).toHaveLength(2 + RACES.length);
+    expect(cells[0].textContent).toBe('MIN / KM');
+    expect(cells[1].textContent).toBe('MIN / MI');
+    expect(cells[0].className).toBe('cell km');
+    expect(cells[1].className).toBe('cell mi');
+  });
+
+  it('labels each race with its name and distance', () => {
+    const marathon = Array.from(header().querySelectorAll('.cell.race')).find((cell) =>
+      cell.querySelector('.race-name')?.textContent === 'MARATHON',
+    );
+
+    expect(marathon?.querySelector('.race-dist')?.textContent).toBe('42.2 km');
+  });
+
+  it('gives only the ultras an info button, wired to their own panel', () => {
+    const el = header();
+    const buttons = Array.from(el.querySelectorAll('button.info'));
+
+    expect(buttons.map((button) => (button as HTMLElement).dataset.race)).toEqual([
+      'tahoe200',
+      'moab240',
+      'bigfoot200',
+      'arizona300',
+    ]);
+    for (const button of buttons) {
+      expect(button.getAttribute('aria-expanded')).toBe('false');
+      expect(button.getAttribute('aria-label')).toContain('About the');
+    }
+  });
+
+  it('builds each ultra panel closed, with a summary and the official link', () => {
+    const el = header();
+    const panels = Array.from(el.querySelectorAll('.tip')) as HTMLElement[];
+
+    expect(panels).toHaveLength(4);
+    for (const panel of panels) {
+      expect(panel.hidden).toBe(true);
+      expect(panel.getAttribute('role')).toBe('dialog');
+      expect(panel.querySelector('strong')?.textContent).toBeTruthy();
+      expect(panel.querySelector('p')?.textContent).toBeTruthy();
+
+      const link = panel.querySelector('a')!;
+      expect(link.getAttribute('href')).toMatch(/^https:\/\/www\.destinationtrailrun\.com\//);
+      expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+      expect(link.getAttribute('target')).toBe('_blank');
+    }
+
+    const tahoe = el.querySelector<HTMLElement>('.tip[data-race="tahoe200"]')!;
+    expect(tahoe.getAttribute('aria-label')).toBe('Tahoe 200 Endurance Run');
+    expect(tahoe.querySelector('.tip-note')?.textContent).toBe(
+      '322.5 km · course varies by edition',
+    );
   });
 });
 
@@ -39,6 +113,15 @@ describe('initialScrollTop', () => {
 
   it('clamps to 0 for rows near the top of the tape', () => {
     expect(initialScrollTop(10, 40, 800)).toBe(0);
+  });
+
+  it('centers below the heading strip when given its height', () => {
+    // The heading floats over the top 44 px, so the row belongs in the middle
+    // of the remaining 756 px, not the middle of the viewport.
+    const scrollTop = initialScrollTop(1000, 40, 800, 44);
+
+    const rowTopOnScreen = 1000 - scrollTop;
+    expect(rowTopOnScreen + 40 / 2).toBe(44 + (800 - 44) / 2);
   });
 });
 
@@ -74,6 +157,19 @@ describe('centerRowInTape', () => {
     expect(scrollTop).toBe(initialScrollTop(1260, 47, 700));
     expect(scrollTop).not.toBe(initialScrollTop(1304, 47, 700));
     expect(initialScrollTop(1304, 47, 700) - scrollTop).toBe(44);
+  });
+
+  it('passes the heading inset through', () => {
+    const tape = withOffsets(document.createElement('div'), {
+      offsetTop: 0,
+      clientHeight: 800,
+    });
+    const row = withOffsets(document.createElement('div'), {
+      offsetTop: 1000,
+      offsetHeight: 40,
+    });
+
+    expect(centerRowInTape(tape, row, 44)).toBe(initialScrollTop(1000, 40, 800, 44));
   });
 
   it('matches initialScrollTop directly when tape.offsetTop is 0', () => {

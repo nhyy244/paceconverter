@@ -10,19 +10,17 @@
     <title>Pace Ruler — min/km ↔ min/mi</title>
   </head>
   <body>
-    <main class="plate">
+    <main class="plate" id="plate">
       <span class="pin" aria-hidden="true"></span>
       <span class="pin pin-right" aria-hidden="true"></span>
-      <header class="head">
-        <span>MIN / KM</span>
-        <span>MIN / MI</span>
-      </header>
       <div
         id="tape"
         class="tape"
         tabindex="0"
-        aria-label="Pace conversion ruler from 2:00 to 100:00 minutes per kilometer. Drag it or use the arrow keys to browse."
-      ></div>
+        aria-label="Pace ruler from 2:00 to 100:00 minutes per kilometer, with finish times for each race distance. Drag it in any direction, or use the arrow keys."
+      >
+        <header class="head" id="head"></header>
+      </div>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

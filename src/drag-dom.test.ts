@@ -4,11 +4,13 @@ import { enableDragScroll } from './drag';
 
 interface PointerInit {
   clientY: number;
+  clientX?: number;
   /** Event timestamp in ms; only matters for fling velocity. */
   t?: number;
   pointerId?: number;
   pointerType?: string;
   button?: number;
+  target?: Element;
 }
 
 /**
@@ -19,6 +21,7 @@ interface PointerInit {
 function pointerEvent(type: string, init: PointerInit): PointerEvent {
   const event = new Event(type, { bubbles: true, cancelable: true });
   Object.defineProperties(event, {
+    clientX: { value: init.clientX ?? 0 },
     clientY: { value: init.clientY },
     pointerId: { value: init.pointerId ?? 1 },
     pointerType: { value: init.pointerType ?? 'mouse' },
@@ -36,6 +39,7 @@ describe('enableDragScroll', () => {
     tape = document.createElement('div');
     document.body.append(tape);
     tape.scrollTop = 500;
+    tape.scrollLeft = 200;
     dispose = enableDragScroll(tape);
   });
 
@@ -57,6 +61,29 @@ describe('enableDragScroll', () => {
     tape.dispatchEvent(pointerEvent('pointermove', { clientY: 250 }));
 
     expect(tape.scrollTop).toBe(550);
+  });
+
+  it('pans the columns sideways too', () => {
+    tape.dispatchEvent(pointerEvent('pointerdown', { clientX: 100, clientY: 300 }));
+    tape.dispatchEvent(pointerEvent('pointermove', { clientX: 130, clientY: 320 }));
+
+    // A diagonal pull moves both axes by the distance travelled on each.
+    expect(tape.scrollLeft).toBe(170);
+    expect(tape.scrollTop).toBe(480);
+  });
+
+  it('leaves buttons and links to be pressed rather than grabbed', () => {
+    const button = document.createElement('button');
+    tape.append(button);
+
+    const event = pointerEvent('pointerdown', { clientY: 300 });
+    button.dispatchEvent(event);
+    tape.dispatchEvent(pointerEvent('pointermove', { clientY: 400 }));
+
+    expect(tape.scrollTop).toBe(500);
+    expect(tape.classList.contains('dragging')).toBe(false);
+    // Suppressing the default here would rob the button of focus.
+    expect(event.defaultPrevented).toBe(false);
   });
 
   it('tracks the total distance from the press, not each step', () => {

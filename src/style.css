@@ -9,7 +9,11 @@
   --minor: #73736e;
   --minor-mi: #4a5f94;
   --head-text: #ffffff;
+  --race-alt: #faf9f6;
+  --pin-edge: rgba(16, 16, 16, 0.14);
   --shadow: 0 2px 14px rgba(16, 16, 16, 0.12);
+  --tip-shadow: 0 8px 28px rgba(16, 16, 16, 0.22);
+  --tip-border: rgba(16, 16, 16, 0.08);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,7 +26,11 @@
     --mi-ink: #a7bcf0;
     --minor: #8f8f89;
     --minor-mi: #8ca3de;
+    --race-alt: #1b1c21;
+    --pin-edge: rgba(255, 255, 255, 0.16);
     --shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+    --tip-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+    --tip-border: rgba(255, 255, 255, 0.1);
   }
 }
 
@@ -54,31 +62,40 @@ body {
   flex-direction: column;
   background: var(--plate);
   overflow: hidden;
+  /* Column widths — every row and the heading share them, so columns line up
+     without any scroll syncing. */
+  --pace-col: 4.5rem;
+  --race-col: 5rem;
 }
 
-/* Desktop: float the plate on the paper background */
+/* Desktop: float the plate on the paper background. Wider than the two-column
+   version was, because there are now thirteen columns to show. */
 @media (min-width: 520px) {
   body {
     padding: 24px 0;
   }
   .plate {
+    width: min(100%, 720px);
     height: calc(100dvh - 48px);
     border-radius: 16px;
     box-shadow: var(--shadow);
   }
 }
 
-/* ---- Safety pins (top corners of the header strip) ---- */
+/* ---- Safety pins (top corners of the heading strip) ---- */
 .pin {
   position: absolute;
-  top: 10px;
+  /* Sits in the band above the column labels — see .head .cell's top padding,
+     which is what keeps the pin off the narrow min/km heading. */
+  top: 7px;
   left: 12px;
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.9);
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.45);
-  z-index: 2;
+  /* Above the heading strip — the pins hold the bib on. */
+  z-index: 6;
 }
 
 .pin-right {
@@ -86,27 +103,15 @@ body {
   right: 12px;
 }
 
-/* ---- Header strip ---- */
-.head {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  background: var(--blue);
-  color: var(--head-text);
-  padding: 18px 0 12px;
-  text-align: center;
-  font-family: 'Archivo Black', 'Archivo', system-ui, sans-serif;
-  font-size: 0.8rem;
-  letter-spacing: 0.16em;
-}
-
 /* ---- The tape ---- */
 .tape {
   flex: 1;
-  overflow-y: auto;
+  /* Both axes: rows scroll vertically, columns pan horizontally. */
+  overflow: auto;
   overscroll-behavior: contain;
   /* The tape is pulled by hand; a scrollbar would break the bib. */
   cursor: grab;
-  touch-action: pan-y;
+  touch-action: pan-x pan-y;
   scrollbar-width: none;
 }
 
@@ -124,37 +129,214 @@ body {
   outline-offset: -3px;
 }
 
+.head,
 .row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+}
+
+/* ---- Heading strip ---- */
+.head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--blue);
+  color: var(--head-text);
+  font-family: 'Archivo Black', 'Archivo', system-ui, sans-serif;
+  letter-spacing: 0.1em;
+}
+
+.head .cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  /* Top padding clears the safety pins, which overlay the strip's corners. */
+  padding: 21px 4px 10px;
+  background: var(--blue);
+  font-size: 0.6rem;
+  line-height: 1.1;
+}
+
+.race-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  /* Longer race names wrap to two lines; this keeps every distance label on
+     the same baseline regardless. */
+  margin-top: auto;
+}
+
+.race-dist {
+  font-family: 'Archivo', system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 0.56rem;
+  letter-spacing: 0.02em;
+  opacity: 0.75;
+}
+
+/* ---- Columns ---- */
+.cell {
+  flex: 0 0 var(--race-col);
   text-align: center;
 }
 
-/* The mile column's tint IS the column separation — no divider line. */
-.cell {
-  display: block;
+.cell.km,
+.cell.mi {
+  flex-basis: var(--pace-col);
 }
 
+/* min/km stays put while the rest of the columns pan past it. */
+.cell.km {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--plate);
+}
+
+.head .cell.km {
+  z-index: 4;
+  background: var(--blue);
+}
+
+/* Only once there's something hidden behind it does the pinned column need an
+   edge to sit on. */
+.plate.scrolled-x .cell.km {
+  border-right: 1px solid var(--pin-edge);
+}
+
+/* The mile column's tint IS the column separation — no divider line. */
 .cell.mi {
   background: var(--mi-tint);
   color: var(--mi-ink);
 }
 
+/* Alternate the race columns so the eye can track a row across thirteen of
+   them. Cells are km, mi, then races, so odd children alternate. */
+.row .cell.race:nth-child(odd) {
+  background: var(--race-alt);
+}
+
 .row.major .cell {
   padding: 10px 0;
-  font-size: 1.25rem;
+  font-size: 1.05rem;
   font-weight: 700;
+}
+
+.row.major .cell.race {
+  /* The pace is the ruler; race times are what it implies. */
+  font-size: 0.95rem;
 }
 
 .row.minor .cell {
   padding: 6px 0;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 400;
   color: var(--minor);
 }
 
 .row.minor .cell.mi {
   color: var(--minor-mi);
+}
+
+/* ---- Info button on the ultra columns ---- */
+.info {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--head-text);
+  font-family: 'Archivo', system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+  letter-spacing: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.info:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.info:focus-visible {
+  outline: 2px solid var(--head-text);
+  outline-offset: 1px;
+}
+
+.info[aria-expanded='true'] {
+  background: var(--head-text);
+  border-color: var(--head-text);
+  color: var(--blue);
+}
+
+/* ---- Info panel ---- */
+.tip {
+  /* Fixed, so the tape's overflow can't clip it. */
+  position: fixed;
+  z-index: 10;
+  width: 15.5rem;
+  max-width: calc(100vw - 1rem);
+  padding: 12px 14px 13px;
+  border: 1px solid var(--tip-border);
+  border-radius: 12px;
+  background: var(--plate);
+  box-shadow: var(--tip-shadow);
+  color: var(--ink);
+  font-family: 'Archivo', system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-align: left;
+}
+
+.tip[hidden] {
+  display: none;
+}
+
+.tip strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+}
+
+.tip p {
+  margin: 0 0 7px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.tip .tip-note {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--minor);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tip a {
+  color: var(--blue);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.tip a:hover {
+  text-decoration: underline;
+}
+
+.tip a:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
