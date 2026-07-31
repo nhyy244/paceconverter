@@ -168,10 +168,13 @@ export function enableDragScroll(el: HTMLElement): () => void {
   const onPointerUp = (event: PointerEvent): void => endDrag(event, true);
   const onPointerCancel = (event: PointerEvent): void => endDrag(event, false);
 
+  // Only pointerdown can cancel a gesture, so it's the only listener that has
+  // to be non-passive. Registering the others passively tells the browser it
+  // can scroll without waiting to hear from them.
   el.addEventListener('pointerdown', onPointerDown);
-  el.addEventListener('pointermove', onPointerMove);
-  el.addEventListener('pointerup', onPointerUp);
-  el.addEventListener('pointercancel', onPointerCancel);
+  el.addEventListener('pointermove', onPointerMove, { passive: true });
+  el.addEventListener('pointerup', onPointerUp, { passive: true });
+  el.addEventListener('pointercancel', onPointerCancel, { passive: true });
   el.addEventListener('wheel', stopFling, { passive: true });
   el.addEventListener('keydown', stopFling);
 

@@ -22,7 +22,15 @@ tape.append(renderTape(buildRows()));
 
 // The tape opens at its start — the fastest pace — and is pulled from there.
 
-enableDragScroll(tape);
+// Touch is the browser's job — its panning already is this gesture and does it
+// better. Binding anyway isn't free: a cancellable pointerdown listener on the
+// scroller makes Safari wait to hear from it before it will scroll, which reads
+// as lag on every swipe. So the binding goes on only where there's a pointer to
+// use it.
+if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+  enableDragScroll(tape);
+}
+
 enableInfoPanels(head, tape);
 
 // The pinned pace column only needs an edge once columns are hidden behind it.
