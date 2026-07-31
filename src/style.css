@@ -1,1 +1,151 @@
-/* Race Bib styling arrives in Task 6. */
+/* ---- Race Bib palette (contrast-checked; see plan Global Constraints) ---- */
+:root {
+  --blue: #1749c8;
+  --ink: #101010;
+  --paper: #f5f4f1;
+  --plate: #ffffff;
+  --mi-tint: #edf2fd;
+  --mi-ink: #17307a;
+  --minor: #73736e;
+  --minor-mi: #4a5f94;
+  --head-text: #ffffff;
+  --shadow: 0 2px 14px rgba(16, 16, 16, 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --blue: #2f5bd6;
+    --ink: #f0f0ed;
+    --paper: #0c0d0f;
+    --plate: #17181c;
+    --mi-tint: #151b2a;
+    --mi-ink: #a7bcf0;
+    --minor: #8f8f89;
+    --minor-mi: #8ca3de;
+    --shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Archivo', system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  justify-content: center;
+}
+
+/* ---- The bib plate ---- */
+.plate {
+  position: relative;
+  width: min(100%, 480px);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--plate);
+  overflow: hidden;
+}
+
+/* Desktop: float the plate on the paper background */
+@media (min-width: 520px) {
+  body {
+    padding: 24px 0;
+  }
+  .plate {
+    height: calc(100dvh - 48px);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+  }
+}
+
+/* ---- Safety pins (top corners of the header strip) ---- */
+.pin {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.45);
+  z-index: 2;
+}
+
+.pin-right {
+  left: auto;
+  right: 12px;
+}
+
+/* ---- Header strip ---- */
+.head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--blue);
+  color: var(--head-text);
+  padding: 18px 0 12px;
+  text-align: center;
+  font-family: 'Archivo Black', 'Archivo', system-ui, sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.16em;
+}
+
+/* ---- The tape ---- */
+.tape {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.tape:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: -3px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  text-align: center;
+}
+
+/* The mile column's tint IS the column separation — no divider line. */
+.cell {
+  display: block;
+}
+
+.cell.mi {
+  background: var(--mi-tint);
+  color: var(--mi-ink);
+}
+
+.row.major .cell {
+  padding: 10px 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.row.minor .cell {
+  padding: 6px 0;
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: var(--minor);
+}
+
+.row.minor .cell.mi {
+  color: var(--minor-mi);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+  }
+}

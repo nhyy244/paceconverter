@@ -1,3 +1,6 @@
+import '@fontsource/archivo/400.css';
+import '@fontsource/archivo/700.css';
+import '@fontsource/archivo-black/400.css';
 import './style.css';
 import { buildRows, renderTape, initialScrollTop } from './tape';
 
