@@ -26,6 +26,15 @@ Node 20 or newer (Vite 7 requires it).
 There is no backend and no build-time configuration — no environment variables,
 no secrets, nothing to set up per environment.
 
+The canonical domain is **paceconverter.run**; it appears in `<link rel="canonical">`
+and the Open Graph tags in `index.html`, so a different domain means editing those.
+
+`public/og.png` is the link-preview card — a 1200×630 screenshot of the app
+itself, parked on 4:30–5:10 min/km so a runner recognises the numbers at a
+glance. Regenerate it after any visual change by loading the built app at that
+size and capturing it; nothing automates this, so it will drift if the design
+moves on.
+
 **Vercel.** Import the repository; `vercel.json` supplies the framework preset,
 the build command, and the output directory, so the defaults need no editing.
 It also sets the caching and security headers: hashed assets under `/assets/`
