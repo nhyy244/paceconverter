@@ -7,6 +7,10 @@
     <meta name="theme-color" content="#2F5BD6" media="(prefers-color-scheme: dark)" />
     <meta name="description" content="Running pace ruler — min/km and min/mi side by side, with finish times for every race from a 5K to a 300-mile ultra." />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231749C8'/%3E%3C/svg%3E" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pace Converter" />
+    <meta property="og:description" content="Every row is one pace: min/km, min/mi, and finish times from a 5K to a 300-mile ultra." />
+    <meta name="twitter:card" content="summary" />
     <title>Pace Converter — pace, splits and race times</title>
   </head>
   <body>
@@ -23,10 +27,15 @@
           class="tape"
           role="table"
           tabindex="0"
-          aria-label="Pace ruler from 1:30 to 100:00 minutes per kilometer, with finish times for each race distance. Drag it in any direction, or use the arrow keys."
+          aria-label="Pace ruler from 1:30 to 60:00 minutes per kilometer, with finish times for each race distance. Drag it in any direction, or use the arrow keys."
         >
           <header class="head" id="head" role="row"></header>
         </div>
+        <noscript>
+          <p class="fallback">
+            The ruler is built in the browser, so it needs JavaScript enabled.
+          </p>
+        </noscript>
       </main>
       <footer class="footnote">
         <p>

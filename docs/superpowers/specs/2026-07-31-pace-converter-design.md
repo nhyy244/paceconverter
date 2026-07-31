@@ -1,4 +1,4 @@
-# Pace Ruler — v1 Design
+# Pace Converter — Design
 
 **Date:** 2026-07-31
 **Status:** Approved pending user review
@@ -23,11 +23,11 @@ longer races. There is no input field, no convert button, and no selected value
 | Interaction model | Pure ruler (ELK style) — no center-line selection, no typing |
 | Gesture | Grab the tape and pull in any direction; no visible scrollbar |
 | Unit switching | None. Considered click-to-toggle km/mi and dropped it: a race time is a fact about the distance, so a toggle would only relabel distances |
-| Tape range | 2:00 → 100:00 min/km, hard stops at both ends |
-| Tape steps | Uniform 5 s steps (~1,177 rows); 10 s rows styled "major", 5 s rows "minor" |
+| Tape range | 1:30 → 60:00 min/km, hard stops at both ends |
+| Tape steps | Uniform 5 s steps (703 rows); 10 s rows styled "major", 5 s rows "minor" |
 | Stack | Vite + vanilla TypeScript (chosen over Angular for load performance) |
 | Backend | None — all computation client-side |
-| Deployment | Docker: multi-stage build, nginx:alpine serving static `dist/` |
+| Deployment | Vercel (`vercel.json`); a Docker/nginx image serves the same build anywhere else, with headers kept in step |
 | Telemetry | None in v1 |
 
 ## Architecture
@@ -40,10 +40,10 @@ src/
   pace.ts     — domain: conversion + duration formatting (pure functions)
   races.ts    — the race registry: distances, and info for the ultras
   tape.ts     — row data: range config × races → rows (pure)
-  tape-dom.ts — rendering rows and headings, plus centering arithmetic
+  tape-dom.ts — rendering rows and headings
   drag.ts     — grab-and-pull gesture: fling physics + pointer binding
   tooltip.ts  — info panels: placement arithmetic + open/close behaviour
-  main.ts     — bootstrap: build the tape, centre it, bind the gesture and panels
+  main.ts     — bootstrap: build the tape, bind the gesture and the panels
   style.css   — mobile-first layout, ruler styling, dark/light
 index.html
 ```
@@ -56,7 +56,7 @@ index.html
   hours unit — pace is conventionally read in minutes even when large.
 - Finish-time formatting scales to the distance: `m:ss` under an hour, `h:mm:ss`
   under a day, `Dd Hh` beyond — which is how a 200-miler's time is quoted anyway.
-  The slowest row on the longest course reads `33d 14h`.
+  The slowest row on the longest course reads `20d 3h`.
 - All functions are pure and independently testable.
 
 ### Races (`races.ts`)
@@ -75,11 +75,11 @@ rather than implying a fixed distance. Worth re-checking before each season.
 
 ### Tape (`tape.ts`)
 
-- Row data derived from a range config: `{ minSecPerKm: 120, maxSecPerKm: 6000, stepSec: 5 }`
-  → 1,177 rows. Config is a constant but kept as an explicit parameter so range
+- Row data derived from a range config: `{ minSecPerKm: 90, maxSecPerKm: 3600, stepSec: 5 }`
+  → 703 rows. Config is a constant but kept as an explicit parameter so range
   or step changes are one-line edits.
 - All rows are rendered eagerly into one native scroll container. No virtual
-  scrolling: ~1,200 rows × 13 text cells is well within mobile rendering budgets,
+  scrolling: ~700 rows × 13 text cells is well within mobile rendering budgets,
   and native scroll gives momentum/feel for free.
 - Each row is a flex row of fixed-width cells — `(min/km, min/mi, …races)`. Every
   row and the heading share the same widths, so columns line up with no scroll
@@ -97,8 +97,13 @@ container and stickiness does the rest — no second scroller, no synchronisatio
   while the race columns pan past it. It grows a hairline right edge only once
   something is hidden behind it.
 - The heading strip is `position: sticky; top: 0` *inside* the scroller, so it
-  pans horizontally with the columns while staying fixed vertically. Centering
-  therefore takes the strip's height as a top inset.
+  pans horizontally with the columns while staying fixed vertically.
+- The heading and every row take one explicit shared width (`--tape-width`,
+  counting `--race-count` columns, which `main.ts` sets from the registry). Left
+  to `max-content` they size separately, and the heading's longest unbreakable
+  label — MARATHON — made it wider than the rows, so the last column stopped
+  short of the right edge. `min-width: 0` on cells stops content driving width
+  at all.
 - Race columns alternate a barely-there tint so the eye can track one row across
   thirteen of them.
 - At rest the view shows min/km beside min/mi — exactly the two-column app that
@@ -153,7 +158,9 @@ hidden and the cursor is `grab`/`grabbing`.
 
 - The heading strip sits inside the scroller and sticks to its top, so it pans
   with the columns but never scrolls away vertically.
-- On load, scroll so **5:00 min/km** is vertically centered below that strip.
+- The tape opens at its start — the fastest pace — rather than scrolling to a
+  chosen pace. The centring helpers this replaced are gone; see git history if a
+  landing pace is ever wanted again.
 - Tabular numerals (`font-variant-numeric: tabular-nums`) so the tape doesn't
   shimmy while scrolling.
 
@@ -183,9 +190,11 @@ header strip, and safety-pin dots at the plate's top corners.
 - Softness: no hard outer border — soft shadow, rounded plate corners, pins at
   the top corners only. The tape scrolls edge-to-edge under the heading strip,
   whose top padding is what keeps the pins clear of the narrow `MIN / KM` label.
-- Mobile-first: full-viewport plate; desktop constrains to a centered
-  max-width of 720 px — wider than the two-column version's 480 px, because
-  there are now thirteen columns worth showing.
+- Mobile-first: the plate is inset 12 px (or the safe-area inset, whichever is
+  larger) and capped at 480 px. From 760 px up the page gains a masthead and
+  footnote and the plate runs to 1,180 px, which fits all thirteen columns at
+  once from roughly 1,168 px of viewport — between the breakpoint and there, the
+  columns still pan.
 - Dark variant via `prefers-color-scheme` derived from the same palette
   (paper → near-black, plate → dark ink surface, tint/blue adjusted for
   contrast); no manual toggle in v1. All text meets WCAG AA contrast in both.
@@ -200,7 +209,7 @@ concentrates in the domain math:
 
 - Rounding happens once, on the converted integer seconds — formatting integer
   seconds to `m:ss` can never produce `:60`.
-- Range endpoints (2:00 and 100:00) must appear as exact rows.
+- Range endpoints (1:30 and 60:00) must appear as exact rows.
 
 ## Testing
 
@@ -228,8 +237,9 @@ Vitest, colocated unit tests:
 
 No e2e tests. Anything that depends on real layout is verified by hand in a real
 browser before release, because happy-dom has no layout engine and so no test
-here can reach it: that 5:00 lands centered once fonts have swapped in, that a
-pull moves the tape the distance the pointer travelled, that the pinned column
+here can reach it: that a pull moves the tape the distance the pointer
+travelled, that the heading and every row are exactly the same width so the last
+column sits flush, that the pinned column
 and heading actually stick, and that an info panel lands on screen at a phone
 width without being clipped by the tape's overflow.
 
