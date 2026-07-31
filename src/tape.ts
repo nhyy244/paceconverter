@@ -69,3 +69,19 @@ export function initialScrollTop(
 ): number {
   return Math.max(0, rowOffsetTop - (viewportHeight - rowHeight) / 2);
 }
+
+/**
+ * Scroll offset that centers `row` inside `tape`'s viewport.
+ *
+ * `row.offsetTop` is relative to its nearest positioned ancestor, which may
+ * not be `tape` itself (e.g. `tape` sits inside a `position: relative`
+ * sibling of a header strip). Subtracting `tape.offsetTop` re-bases the row
+ * offset onto the tape's own coordinate space before centering.
+ */
+export function centerRowInTape(tape: HTMLElement, row: HTMLElement): number {
+  return initialScrollTop(
+    row.offsetTop - tape.offsetTop,
+    row.offsetHeight,
+    tape.clientHeight,
+  );
+}
