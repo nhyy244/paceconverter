@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { kmToMiSeconds, formatPace, formatDuration } from './pace';
+import {
+  kmToMiSeconds,
+  formatPace,
+  formatDuration,
+  MAX_SEC_PER_KM,
+  MIN_SEC_PER_KM,
+} from './pace';
 
 describe('kmToMiSeconds', () => {
   it('converts 5:00/km (300 s) to 8:03/mi (483 s)', () => {
@@ -15,8 +21,8 @@ describe('kmToMiSeconds', () => {
   });
 
   it('converts both tape endpoints', () => {
-    expect(kmToMiSeconds(120)).toBe(193); // 193.12128
-    expect(kmToMiSeconds(6000)).toBe(9656); // 9656.064
+    expect(kmToMiSeconds(MIN_SEC_PER_KM)).toBe(145); // 90 × 1.609344 = 144.84096
+    expect(kmToMiSeconds(MAX_SEC_PER_KM)).toBe(5794); // 3600 × 1.609344 = 5793.6384
   });
 });
 
@@ -51,8 +57,8 @@ describe('formatDuration', () => {
   it('switches to days and hours at a day', () => {
     expect(formatDuration(86_400)).toBe('1d 0h');
     expect(formatDuration(180_000)).toBe('2d 2h');
-    // The slowest row on the longest course: 100:00/km over 483.6 km.
-    expect(formatDuration(2_901_600)).toBe('33d 14h');
+    // The slowest row on the longest course: 60:00/km over 483.6 km.
+    expect(formatDuration(MAX_SEC_PER_KM * 483.6)).toBe('20d 3h');
   });
 
   it('rounds to the nearest second', () => {

@@ -23,8 +23,8 @@ longer races. There is no input field, no convert button, and no selected value
 | Interaction model | Pure ruler (ELK style) — no center-line selection, no typing |
 | Gesture | Grab the tape and pull in any direction; no visible scrollbar |
 | Unit switching | None. Considered click-to-toggle km/mi and dropped it: a race time is a fact about the distance, so a toggle would only relabel distances |
-| Tape range | 1:30 → 100:00 min/km, hard stops at both ends |
-| Tape steps | Uniform 5 s steps (1,183 rows); 10 s rows styled "major", 5 s rows "minor" |
+| Tape range | 1:30 → 60:00 min/km, hard stops at both ends |
+| Tape steps | Uniform 5 s steps (703 rows); 10 s rows styled "major", 5 s rows "minor" |
 | Stack | Vite + vanilla TypeScript (chosen over Angular for load performance) |
 | Backend | None — all computation client-side |
 | Deployment | Vercel (`vercel.json`); a Docker/nginx image serves the same build anywhere else, with headers kept in step |
@@ -56,7 +56,7 @@ index.html
   hours unit — pace is conventionally read in minutes even when large.
 - Finish-time formatting scales to the distance: `m:ss` under an hour, `h:mm:ss`
   under a day, `Dd Hh` beyond — which is how a 200-miler's time is quoted anyway.
-  The slowest row on the longest course reads `33d 14h`.
+  The slowest row on the longest course reads `20d 3h`.
 - All functions are pure and independently testable.
 
 ### Races (`races.ts`)
@@ -75,11 +75,11 @@ rather than implying a fixed distance. Worth re-checking before each season.
 
 ### Tape (`tape.ts`)
 
-- Row data derived from a range config: `{ minSecPerKm: 90, maxSecPerKm: 6000, stepSec: 5 }`
-  → 1,183 rows. Config is a constant but kept as an explicit parameter so range
+- Row data derived from a range config: `{ minSecPerKm: 90, maxSecPerKm: 3600, stepSec: 5 }`
+  → 703 rows. Config is a constant but kept as an explicit parameter so range
   or step changes are one-line edits.
 - All rows are rendered eagerly into one native scroll container. No virtual
-  scrolling: ~1,200 rows × 13 text cells is well within mobile rendering budgets,
+  scrolling: ~700 rows × 13 text cells is well within mobile rendering budgets,
   and native scroll gives momentum/feel for free.
 - Each row is a flex row of fixed-width cells — `(min/km, min/mi, …races)`. Every
   row and the heading share the same widths, so columns line up with no scroll
@@ -209,7 +209,7 @@ concentrates in the domain math:
 
 - Rounding happens once, on the converted integer seconds — formatting integer
   seconds to `m:ss` can never produce `:60`.
-- Range endpoints (2:00 and 100:00) must appear as exact rows.
+- Range endpoints (1:30 and 60:00) must appear as exact rows.
 
 ## Testing
 
