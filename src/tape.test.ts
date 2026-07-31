@@ -26,6 +26,7 @@ describe('buildRows', () => {
       secPerKm: MAX_SEC_PER_KM,
       kmLabel: formatPace(MAX_SEC_PER_KM),
       miLabel: formatPace(kmToMiSeconds(MAX_SEC_PER_KM)),
+      major: true,
     });
 
     // Spot-check the current range's actual labels, so a wrong constant shows up
@@ -54,7 +55,7 @@ describe('buildRows', () => {
   });
 
   it('gives every row a finish time for every race', () => {
-    for (const row of [rows[0], rows[588], rows.at(-1)!]) {
+    for (const row of [rows[0], rows[Math.floor(rows.length / 2)], rows.at(-1)!]) {
       expect(row.raceLabels).toHaveLength(RACES.length);
       expect(row.raceLabels.every((label) => label.length > 0)).toBe(true);
     }

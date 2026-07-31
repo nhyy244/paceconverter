@@ -112,35 +112,3 @@ export function renderTape(rows: TapeRow[]): DocumentFragment {
   }
   return fragment;
 }
-
-/**
- * Scroll offset that vertically centers a row in the area below `topInset` —
- * the height of the heading strip, which floats over the top of the tape.
- * Clamped so the tape never over-scrolls at the top.
- */
-export function initialScrollTop(
-  rowOffsetTop: number,
-  rowHeight: number,
-  viewportHeight: number,
-  topInset = 0,
-): number {
-  const visibleHeight = viewportHeight - topInset;
-  return Math.max(0, rowOffsetTop - topInset - (visibleHeight - rowHeight) / 2);
-}
-
-/**
- * Scroll offset that centers `row` inside `tape`'s viewport.
- *
- * `row.offsetTop` is relative to its nearest positioned ancestor, which may
- * not be `tape` itself (e.g. `tape` sits inside a `position: relative` plate).
- * Subtracting `tape.offsetTop` re-bases the row offset onto the tape's own
- * coordinate space before centering.
- */
-export function centerRowInTape(tape: HTMLElement, row: HTMLElement, topInset = 0): number {
-  return initialScrollTop(
-    row.offsetTop - tape.offsetTop,
-    row.offsetHeight,
-    tape.clientHeight,
-    topInset,
-  );
-}

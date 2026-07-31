@@ -42,11 +42,6 @@
   box-sizing: border-box;
 }
 
-html,
-body {
-  height: 100%;
-}
-
 body {
   margin: 0;
   background: var(--paper);
@@ -61,8 +56,12 @@ body {
   flex-direction: column;
   align-items: center;
   /* A margin at the sides — thirteen columns pressed against the screen edges
-     feels airless. */
-  padding: 0 12px 12px;
+     feels airless. The insets matter because the viewport is set to
+     viewport-fit=cover: in landscape on a notched phone, 12px alone would put
+     the plate's edge under the notch. */
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
 
 /* Compact on a phone, where every row of tape counts. Text lines up with the
@@ -123,8 +122,10 @@ body {
   /* Two pace columns plus one per race. Stated outright rather than left to
      max-content, which sizes the heading and the rows separately: the heading's
      longest label is wider than any race time, so the rows would come up short
-     and leave a gap past the last column. */
-  --tape-width: calc(2 * var(--pace-col) + 11 * var(--race-col));
+     and leave a gap past the last column. main.ts sets --race-count from the
+     registry; the fallback only applies if the script hasn't run. */
+  --race-count: 11;
+  --tape-width: calc(2 * var(--pace-col) + var(--race-count) * var(--race-col));
 }
 
 /* ---- Desktop: a page, not a phone in a frame ----
@@ -132,7 +133,7 @@ body {
    vertical space isn't scarce. */
 @media (min-width: 760px) {
   .page {
-    padding: 30px 28px 18px;
+    padding: 30px max(28px, env(safe-area-inset-left)) 18px;
     gap: 20px;
   }
 
@@ -193,6 +194,16 @@ body {
 .pin-right {
   left: auto;
   right: 12px;
+}
+
+/* Only ever seen with JavaScript disabled, where the plate is empty. */
+.fallback {
+  margin: 0;
+  padding: 24px 20px;
+  color: var(--minor);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  text-align: center;
 }
 
 /* ---- The tape ---- */

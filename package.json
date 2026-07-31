@@ -5,7 +5,7 @@
   "description": "Running pace ruler — min/km and min/mi with finish times from a 5K to a 300-mile ultra",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "vite",

@@ -43,6 +43,11 @@ headers kept in step:
 Adding an analytics script or any other third-party resource means loosening the
 CSP in both `vercel.json` and `nginx.conf`; they are deliberately identical.
 
+This catches same-origin beacons too, which is the easiest way to be caught out:
+Vercel Analytics and Speed Insights load their script fine under `script-src
+'self'` but POST to `/_vercel/insights/*`, so `connect-src 'none'` silently
+discards every event. Enabling either means allowing that path.
+
 ## Design docs
 
 - Spec: docs/superpowers/specs/2026-07-31-pace-converter-design.md
