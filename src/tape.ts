@@ -38,3 +38,34 @@ export function buildRows(config: TapeConfig = DEFAULT_CONFIG): TapeRow[] {
   }
   return rows;
 }
+
+/** Render rows as div.row > span.cell.km + span.cell.mi. Column sync is structural. */
+export function renderTape(rows: TapeRow[]): DocumentFragment {
+  const fragment = document.createDocumentFragment();
+  for (const row of rows) {
+    const el = document.createElement('div');
+    el.className = row.major ? 'row major' : 'row minor';
+    el.dataset.secPerKm = String(row.secPerKm);
+
+    const km = document.createElement('span');
+    km.className = 'cell km';
+    km.textContent = row.kmLabel;
+
+    const mi = document.createElement('span');
+    mi.className = 'cell mi';
+    mi.textContent = row.miLabel;
+
+    el.append(km, mi);
+    fragment.append(el);
+  }
+  return fragment;
+}
+
+/** Scroll offset that vertically centers a row; clamped so the tape never over-scrolls at the top. */
+export function initialScrollTop(
+  rowOffsetTop: number,
+  rowHeight: number,
+  viewportHeight: number,
+): number {
+  return Math.max(0, rowOffsetTop - (viewportHeight - rowHeight) / 2);
+}
