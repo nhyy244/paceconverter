@@ -55,8 +55,6 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* On a phone the tape gets the whole screen; the page furniture below is for
-   viewports with room to spare. */
 .page {
   height: 100dvh;
   display: flex;
@@ -64,9 +62,41 @@ body {
   align-items: center;
 }
 
+/* Compact on a phone, where every row of tape counts. The plate stays
+   edge-to-edge for the sake of the columns, so the text carries its own inset
+   rather than the page having padding. */
 .masthead,
 .footnote {
-  display: none;
+  width: min(100%, 480px);
+}
+
+.masthead {
+  padding: 14px 16px 11px;
+}
+
+.masthead h1 {
+  margin: 0 0 4px;
+  font-family: 'Archivo Black', 'Archivo', system-ui, sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: -0.01em;
+}
+
+.masthead p {
+  margin: 0;
+  color: var(--minor);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.footnote {
+  padding: 9px 16px 11px;
+}
+
+.footnote p {
+  margin: 0;
+  color: var(--minor);
+  font-size: 0.68rem;
+  line-height: 1.45;
 }
 
 /* ---- The bib plate ---- */
@@ -82,12 +112,18 @@ body {
   /* Column widths — every row and the heading share them, so columns line up
      without any scroll syncing. Cells grow past these to fill a wide plate. */
   --pace-col: 4.5rem;
-  --race-col: 5rem;
+  /* Wide enough for MARATHON, the longest label that can't be wrapped. */
+  --race-col: 5.5rem;
+  /* Two pace columns plus one per race. Stated outright rather than left to
+     max-content, which sizes the heading and the rows separately: the heading's
+     longest label is wider than any race time, so the rows would come up short
+     and leave a gap past the last column. */
+  --tape-width: calc(2 * var(--pace-col) + 11 * var(--race-col));
 }
 
 /* ---- Desktop: a page, not a phone in a frame ----
-   Wide enough for all thirteen columns at once, with a masthead and a footnote
-   so the table sits on something rather than floating alone. */
+   Wide enough for all thirteen columns at once, and roomier type now that
+   vertical space isn't scarce. */
 @media (min-width: 760px) {
   .page {
     padding: 30px 28px 18px;
@@ -97,35 +133,32 @@ body {
   .masthead,
   .footnote,
   .plate {
-    display: block;
     width: min(100%, 1180px);
   }
 
+  .masthead,
+  .footnote {
+    padding: 0;
+  }
+
   .plate {
-    display: flex;
     border-radius: 16px;
     box-shadow: var(--shadow);
   }
 
   .masthead h1 {
-    margin: 0 0 6px;
-    font-family: 'Archivo Black', 'Archivo', system-ui, sans-serif;
+    margin-bottom: 6px;
     font-size: 1.6rem;
-    letter-spacing: -0.01em;
   }
 
   .masthead p {
-    margin: 0;
     max-width: 58ch;
-    color: var(--minor);
     font-size: 0.9rem;
     line-height: 1.45;
   }
 
   .footnote p {
-    margin: 0;
     max-width: 74ch;
-    color: var(--minor);
     font-size: 0.75rem;
     line-height: 1.5;
   }
@@ -195,8 +228,7 @@ body {
 .head,
 .row {
   display: flex;
-  width: max-content;
-  min-width: 100%;
+  width: max(100%, var(--tape-width));
 }
 
 /* ---- Heading strip ---- */
@@ -247,6 +279,9 @@ body {
    a wide plate instead of leaving it half empty. */
 .cell {
   flex: 1 0 var(--race-col);
+  /* Without this a long heading sets its own width from its content, making the
+     heading wider than the rows and leaving a gap past the last column. */
+  min-width: 0;
   text-align: center;
 }
 
