@@ -60,18 +60,20 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  /* A margin at the sides — thirteen columns pressed against the screen edges
+     feels airless. */
+  padding: 0 12px 12px;
 }
 
-/* Compact on a phone, where every row of tape counts. The plate stays
-   edge-to-edge for the sake of the columns, so the text carries its own inset
-   rather than the page having padding. */
+/* Compact on a phone, where every row of tape counts. Text lines up with the
+   plate's edges, so the side inset comes from .page alone. */
 .masthead,
 .footnote {
   width: min(100%, 480px);
 }
 
 .masthead {
-  padding: 14px 16px 11px;
+  padding: 14px 0 11px;
 }
 
 .masthead h1 {
@@ -89,7 +91,7 @@ body {
 }
 
 .footnote {
-  padding: 9px 16px 11px;
+  padding: 10px 0 0;
 }
 
 .footnote p {
@@ -109,6 +111,9 @@ body {
   flex-direction: column;
   background: var(--plate);
   border-radius: 16px;
+  /* Now that the plate is inset rather than edge-to-edge, it needs to sit on
+     the paper rather than float flat against it. */
+  box-shadow: var(--shadow);
   overflow: hidden;
   /* Column widths — every row and the heading share them, so columns line up
      without any scroll syncing. Cells grow past these to fill a wide plate. */
@@ -135,15 +140,6 @@ body {
   .footnote,
   .plate {
     width: min(100%, 1180px);
-  }
-
-  .masthead,
-  .footnote {
-    padding: 0;
-  }
-
-  .plate {
-    box-shadow: var(--shadow);
   }
 
   .masthead h1 {
