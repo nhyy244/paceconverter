@@ -8,8 +8,9 @@
 A mobile-first, fully static web app that converts running paces, modeled on the
 ELK currency converter's "tape" UX. v1 shows exactly two columns — **min/km** and
 **min/mi** — as one continuous vertical ruler: every visible row is a valid
-conversion pair, and scrolling brings the pace range you care about into view.
-There is no input field, no convert button, and no selected value ("pure ruler").
+conversion pair, and you pull the tape by hand to bring the pace range you care
+about into view. There is no input field, no convert button, and no selected
+value ("pure ruler").
 
 ## Decisions log
 
@@ -18,6 +19,7 @@ There is no input field, no convert button, and no selected value ("pure ruler")
 | Audience | Runners generally (public, self-explanatory) |
 | Layout | Two columns side by side, synced vertical scroll |
 | Interaction model | Pure ruler (ELK style) — no center-line selection, no typing |
+| Gesture | Grab the tape and pull, on every input; no visible scrollbar |
 | Tape range | 2:00 → 100:00 min/km, hard stops at both ends |
 | Tape steps | Uniform 5 s steps (~1,177 rows); 10 s rows styled "major", 5 s rows "minor" |
 | Stack | Vite + vanilla TypeScript (chosen over Angular for load performance) |
@@ -34,7 +36,8 @@ state. Vite builds a single small bundle (~5–10 kB gz); nginx serves it.
 src/
   pace.ts    — domain: conversion + formatting (pure functions)
   tape.ts    — tape generation: range config → row data → DOM
-  main.ts    — bootstrap: build tape, set initial scroll position
+  drag.ts    — grab-and-pull gesture: fling physics + pointer binding
+  main.ts    — bootstrap: build tape, set initial scroll position, bind drag
   style.css  — mobile-first layout, ruler styling, dark/light
 index.html
 ```
@@ -60,6 +63,22 @@ index.html
   columns.
 - Rows where `secPerKm % 10 === 0` are **major** (full size/opacity); the 5 s
   in-between rows are **minor** (smaller, dimmed).
+
+### Gesture (`drag.ts`)
+
+The tape is moved by grabbing it, never by a scrollbar — the scrollbar is
+hidden and the cursor is `grab`/`grabbing`.
+
+- **Touch is left to the browser.** Native panning already *is* this gesture and
+  does it better: OS-matched momentum and rubber-banding at the ends.
+- **Mouse and pen** get the same feel from a pointer binding: press records the
+  scroll offset, movement re-derives it from the total distance pulled, and
+  release hands the tracked velocity to a friction-decayed coast.
+- Release velocity comes from the samples of the last 100 ms, so a drag that
+  came to rest doesn't fling; it is capped at 4 px/ms because coalesced pointer
+  events can arrive a fraction of a millisecond apart.
+- A coast is abandoned as soon as the tape is grabbed, scrolled, or keyed again.
+- The physics are pure functions; only a thin binding touches the DOM.
 
 ### Shell (`main.ts` + `index.html`)
 
@@ -114,9 +133,17 @@ Vitest, colocated unit tests:
 - `pace.ts`: conversion known-values (5:00/km → 8:03/mi), rounding behavior,
   formatting edges (`0:0x` seconds padding, large minutes like `160:56`).
 - `tape.ts`: row count for the configured range, first/last row values, step
-  spacing, major/minor classification.
+  spacing, major/minor classification, and (under happy-dom) row markup plus the
+  tape-relative centering arithmetic.
+- `drag.ts`: release velocity from samples — direction, window, rest, the
+  coalesced-event cap — and friction decay, as pure functions; then the pointer
+  binding under happy-dom, including the coast, driven by an injected clock
+  because a headless browser's virtual clock never services `requestAnimationFrame`.
 
-No e2e tests in v1 — the DOM layer is a thin, deterministic render of tested data.
+No e2e tests in v1. Anything that depends on real layout — that 5:00 lands
+centered once fonts have swapped in, that a pull moves the tape the distance the
+pointer travelled — is verified by hand in a real browser before release; those
+are the cases no happy-dom test can reach, since it has no layout engine.
 
 ## Out of scope for v1 (explicit)
 

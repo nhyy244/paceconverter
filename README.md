@@ -1,8 +1,9 @@
 # Pace Ruler
 
-Running pace conversions — min/km and min/mi side by side, as a scrollable
-ruler. No inputs, no buttons: scroll to the pace you care about and read
-across. Styled as a race bib. Fully static; everything is computed client-side.
+Running pace conversions — min/km and min/mi side by side, as one long ruler.
+No inputs, no buttons: grab the tape, pull it to the pace you care about, and
+read across. Styled as a race bib. Fully static; everything is computed
+client-side.
 
 ## Develop
 

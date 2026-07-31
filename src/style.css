@@ -104,6 +104,19 @@ body {
   flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* The tape is pulled by hand; a scrollbar would break the bib. */
+  cursor: grab;
+  touch-action: pan-y;
+  scrollbar-width: none;
+}
+
+.tape::-webkit-scrollbar {
+  display: none;
+}
+
+.tape.dragging {
+  cursor: grabbing;
+  user-select: none;
 }
 
 .tape:focus-visible {
