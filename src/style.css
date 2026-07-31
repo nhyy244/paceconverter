@@ -53,37 +53,96 @@ body {
   color: var(--ink);
   font-family: 'Archivo', system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
+}
+
+/* On a phone the tape gets the whole screen; the page furniture below is for
+   viewports with room to spare. */
+.page {
+  height: 100dvh;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+}
+
+.masthead,
+.footnote {
+  display: none;
 }
 
 /* ---- The bib plate ---- */
 .plate {
   position: relative;
   width: min(100%, 480px);
-  height: 100dvh;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--plate);
   overflow: hidden;
   /* Column widths — every row and the heading share them, so columns line up
-     without any scroll syncing. */
+     without any scroll syncing. Cells grow past these to fill a wide plate. */
   --pace-col: 4.5rem;
   --race-col: 5rem;
 }
 
-/* Desktop: float the plate on the paper background. Wider than the two-column
-   version was, because there are now thirteen columns to show. */
-@media (min-width: 520px) {
-  body {
-    padding: 24px 0;
+/* ---- Desktop: a page, not a phone in a frame ----
+   Wide enough for all thirteen columns at once, with a masthead and a footnote
+   so the table sits on something rather than floating alone. */
+@media (min-width: 760px) {
+  .page {
+    padding: 30px 28px 18px;
+    gap: 20px;
   }
+
+  .masthead,
+  .footnote,
   .plate {
-    width: min(100%, 720px);
-    height: calc(100dvh - 48px);
+    display: block;
+    width: min(100%, 1180px);
+  }
+
+  .plate {
+    display: flex;
     border-radius: 16px;
     box-shadow: var(--shadow);
   }
+
+  .masthead h1 {
+    margin: 0 0 6px;
+    font-family: 'Archivo Black', 'Archivo', system-ui, sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: -0.01em;
+  }
+
+  .masthead p {
+    margin: 0;
+    max-width: 58ch;
+    color: var(--minor);
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .footnote p {
+    margin: 0;
+    max-width: 74ch;
+    color: var(--minor);
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+}
+
+/* Softens the row the plate's bottom edge cuts through, so the tape reads as
+   continuing rather than being chopped off at the corner. */
+.plate::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 16px;
+  background: linear-gradient(to top, var(--plate), transparent);
+  pointer-events: none;
+  z-index: 5;
 }
 
 /* ---- Safety pins (top corners of the heading strip) ---- */
@@ -183,9 +242,11 @@ body {
   opacity: 0.85;
 }
 
-/* ---- Columns ---- */
+/* ---- Columns ----
+   The basis is the narrow-screen width; growing lets thirteen columns share out
+   a wide plate instead of leaving it half empty. */
 .cell {
-  flex: 0 0 var(--race-col);
+  flex: 1 0 var(--race-col);
   text-align: center;
 }
 
