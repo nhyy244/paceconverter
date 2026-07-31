@@ -124,9 +124,10 @@ export function enableDragScroll(el: HTMLElement): () => void {
 
   function onPointerDown(event: PointerEvent): void {
     if (event.pointerType === 'touch' || event.button !== 0) return;
-    // Buttons and links are for pressing, not for grabbing — and suppressing
-    // the default below would rob them of focus.
-    if ((event.target as Element | null)?.closest('button, a')) return;
+    // Controls are for pressing, not for grabbing — suppressing the default
+    // below would rob them of focus. Info panels are excluded too: pressing one
+    // to read it must not pan the tape, which would dismiss it.
+    if ((event.target as Element | null)?.closest('button, a, .tip')) return;
 
     stopFling();
     activePointer = event.pointerId;

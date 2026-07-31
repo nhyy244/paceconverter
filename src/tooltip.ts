@@ -52,9 +52,8 @@ export function enableInfoPanels(container: HTMLElement, scroller: HTMLElement):
   let openButton: HTMLButtonElement | null = null;
 
   function panelFor(button: HTMLButtonElement): HTMLElement | null {
-    return button.parentElement?.querySelector<HTMLElement>(
-      `.tip[data-race="${button.dataset.race}"]`,
-    ) ?? null;
+    const id = button.getAttribute('aria-controls');
+    return id ? container.querySelector<HTMLElement>(`#${id}`) : null;
   }
 
   function close(): void {

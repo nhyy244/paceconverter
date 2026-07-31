@@ -33,6 +33,16 @@ describe('renderTape', () => {
     expect(cells[2].textContent).toBe('10:00');
   });
 
+  it('marks up rows as table rows headed by the pace', () => {
+    const frag = renderTape(buildRows(DEFAULT_CONFIG).slice(0, 1));
+    const row = frag.children[0] as HTMLElement;
+    const cells = Array.from(row.children) as HTMLElement[];
+
+    expect(row.getAttribute('role')).toBe('row');
+    expect(cells[0].getAttribute('role')).toBe('rowheader');
+    expect(cells.slice(1).every((cell) => cell.getAttribute('role') === 'cell')).toBe(true);
+  });
+
   it('renders the full default tape', () => {
     const frag = renderTape(buildRows(DEFAULT_CONFIG));
     expect(frag.children).toHaveLength(1177);
@@ -66,9 +76,9 @@ describe('renderHeader', () => {
 
   it('gives only the ultras an info button, wired to their own panel', () => {
     const el = header();
-    const buttons = Array.from(el.querySelectorAll('button.info'));
+    const buttons = Array.from(el.querySelectorAll('button.info')) as HTMLElement[];
 
-    expect(buttons.map((button) => (button as HTMLElement).dataset.race)).toEqual([
+    expect(buttons.map((button) => button.dataset.race)).toEqual([
       'tahoe200',
       'moab240',
       'bigfoot200',
@@ -77,7 +87,18 @@ describe('renderHeader', () => {
     for (const button of buttons) {
       expect(button.getAttribute('aria-expanded')).toBe('false');
       expect(button.getAttribute('aria-label')).toContain('About the');
+
+      // A disclosure: the button names the panel it reveals.
+      const id = button.getAttribute('aria-controls');
+      expect(id).toBe(`tip-${button.dataset.race}`);
+      expect(el.querySelector(`#${id}`)).toHaveProperty('className', 'tip');
     }
+  });
+
+  it('marks up the headings as table column headers', () => {
+    const cells = Array.from(header().children);
+
+    expect(cells.every((cell) => cell.getAttribute('role') === 'columnheader')).toBe(true);
   });
 
   it('builds each ultra panel closed, with a summary and the official link', () => {
@@ -87,7 +108,6 @@ describe('renderHeader', () => {
     expect(panels).toHaveLength(4);
     for (const panel of panels) {
       expect(panel.hidden).toBe(true);
-      expect(panel.getAttribute('role')).toBe('dialog');
       expect(panel.querySelector('strong')?.textContent).toBeTruthy();
       expect(panel.querySelector('p')?.textContent).toBeTruthy();
 
@@ -98,7 +118,7 @@ describe('renderHeader', () => {
     }
 
     const tahoe = el.querySelector<HTMLElement>('.tip[data-race="tahoe200"]')!;
-    expect(tahoe.getAttribute('aria-label')).toBe('Tahoe 200 Endurance Run');
+    expect(tahoe.querySelector('strong')?.textContent).toBe('Tahoe 200 Endurance Run');
     expect(tahoe.querySelector('.tip-note')?.textContent).toBe(
       '322.5 km · course varies by edition',
     );

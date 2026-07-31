@@ -11,6 +11,9 @@
   --head-text: #ffffff;
   --race-alt: #faf9f6;
   --pin-edge: rgba(16, 16, 16, 0.14);
+  /* --blue is a background colour; as text on the plate it needs its own token
+     so the dark theme can lighten it without lightening the heading strip. */
+  --link: #1749c8;
   --shadow: 0 2px 14px rgba(16, 16, 16, 0.12);
   --tip-shadow: 0 8px 28px rgba(16, 16, 16, 0.22);
   --tip-border: rgba(16, 16, 16, 0.08);
@@ -28,6 +31,7 @@
     --minor-mi: #8ca3de;
     --race-alt: #1b1c21;
     --pin-edge: rgba(255, 255, 255, 0.16);
+    --link: #a7bcf0;
     --shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
     --tip-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
     --tip-border: rgba(255, 255, 255, 0.1);
@@ -175,7 +179,8 @@ body {
   font-weight: 400;
   font-size: 0.56rem;
   letter-spacing: 0.02em;
-  opacity: 0.75;
+  /* Any dimmer than this and white-on-blue drops below AA in the dark theme. */
+  opacity: 0.85;
 }
 
 /* ---- Columns ---- */
@@ -197,9 +202,16 @@ body {
   background: var(--plate);
 }
 
+/* The strip is solid blue: both pace headings have to beat the column colours
+   that .cell.km and .cell.mi set for the rows below. */
 .head .cell.km {
   z-index: 4;
   background: var(--blue);
+}
+
+.head .cell.mi {
+  background: var(--blue);
+  color: var(--head-text);
 }
 
 /* Only once there's something hidden behind it does the pinned column need an
@@ -244,11 +256,12 @@ body {
 
 /* ---- Info button on the ultra columns ---- */
 .info {
+  position: relative;
   flex: none;
   width: 14px;
   height: 14px;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.75);
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.14);
   color: var(--head-text);
@@ -261,6 +274,15 @@ body {
   display: grid;
   place-items: center;
   cursor: pointer;
+}
+
+/* The circle stays 14 px, but a thumb gets 26 x 28 px to aim at — reaching
+   left across the distance label, since anything spilling right is painted
+   over by the next column. */
+.info::after {
+  content: '';
+  position: absolute;
+  inset: -7px 0 -7px -12px;
 }
 
 .info:hover {
@@ -323,7 +345,7 @@ body {
 }
 
 .tip a {
-  color: var(--blue);
+  color: var(--link);
   font-size: 0.75rem;
   font-weight: 700;
   text-decoration: none;
@@ -334,7 +356,7 @@ body {
 }
 
 .tip a:focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--link);
   outline-offset: 2px;
   border-radius: 2px;
 }

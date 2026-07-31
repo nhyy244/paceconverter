@@ -86,6 +86,22 @@ describe('enableDragScroll', () => {
     expect(event.defaultPrevented).toBe(false);
   });
 
+  it('does not pan when an info panel is pressed', () => {
+    // Panels live inside the tape, and panning dismisses them — so pressing one
+    // to read or select it must not start a drag.
+    const panel = document.createElement('div');
+    panel.className = 'tip';
+    const summary = document.createElement('p');
+    panel.append(summary);
+    tape.append(panel);
+
+    summary.dispatchEvent(pointerEvent('pointerdown', { clientY: 300 }));
+    tape.dispatchEvent(pointerEvent('pointermove', { clientY: 400 }));
+
+    expect(tape.scrollTop).toBe(500);
+    expect(tape.classList.contains('dragging')).toBe(false);
+  });
+
   it('tracks the total distance from the press, not each step', () => {
     tape.dispatchEvent(pointerEvent('pointerdown', { clientY: 300 }));
     tape.dispatchEvent(pointerEvent('pointermove', { clientY: 330 }));
@@ -182,6 +198,16 @@ describe('enableDragScroll', () => {
       tape.dispatchEvent(pointerEvent('pointerup', { clientY: 500, t: 32 }));
     }
 
+    /** Flicks by (dx, dy) over two 16 ms frames, then lets go. */
+    function flickBy(dx: number, dy: number): void {
+      tape.dispatchEvent(pointerEvent('pointerdown', { clientX: 300, clientY: 400, t: 0 }));
+      tape.dispatchEvent(
+        pointerEvent('pointermove', { clientX: 300 + dx / 2, clientY: 400 + dy / 2, t: 16 }),
+      );
+      tape.dispatchEvent(pointerEvent('pointermove', { clientX: 300 + dx, clientY: 400 + dy, t: 32 }));
+      tape.dispatchEvent(pointerEvent('pointerup', { clientX: 300 + dx, clientY: 400 + dy, t: 32 }));
+    }
+
     it('keeps the tape coasting in the direction of the flick', () => {
       flick();
       const atRelease = tape.scrollTop;
@@ -190,6 +216,31 @@ describe('enableDragScroll', () => {
 
       // ~3.1 px/ms of downward pull carries on past the release.
       expect(tape.scrollTop).toBeLessThan(atRelease);
+    });
+
+    it('coasts each axis in its own direction', () => {
+      // Opposite signs, so a coast that mixed up the axes would move one of
+      // them the wrong way: left-and-down means scrollLeft climbs as scrollTop
+      // falls.
+      flickBy(-60, 40);
+      const atRelease = { left: tape.scrollLeft, top: tape.scrollTop };
+
+      advanceFrame(16);
+
+      expect(tape.scrollLeft).toBeGreaterThan(atRelease.left);
+      expect(tape.scrollTop).toBeLessThan(atRelease.top);
+    });
+
+    it('keeps coasting on one axis after the other has run out', () => {
+      // Purely vertical: the horizontal axis is spent from the start and must
+      // not cut the vertical coast short.
+      flickBy(0, -60);
+      const atRelease = tape.scrollTop;
+
+      advanceFrame(16);
+
+      expect(queued.length).toBeGreaterThan(0);
+      expect(tape.scrollTop).toBeGreaterThan(atRelease);
     });
 
     it('slows down and settles', () => {

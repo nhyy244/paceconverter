@@ -23,9 +23,12 @@ export interface Race {
  * the World Athletics figures.
  *
  * The four ultras are Destination Trail events whose courses are rerouted
- * between editions, so their km figures are conversions of the organizer's
- * currently stated mileage (noted per race) rather than the round number in
- * the event's name. Worth re-checking before each season.
+ * between editions, and are named for a round number they don't actually run.
+ * Each km figure below converts the mileage printed on the very page the info
+ * panel links to, so anyone who follows the link sees the same number — the
+ * organizer also publishes different figures on per-edition pages, and picking
+ * those would leave the app contradicting its own source. Worth re-checking
+ * before each season.
  */
 export const RACES: Race[] = [
   { id: '5k', label: '5K', km: 5 },
@@ -48,7 +51,7 @@ export const RACES: Race[] = [
   {
     id: 'moab240',
     label: 'MOAB 240',
-    km: 385.7, // 239.66 mi
+    km: 389.1, // 241.8 mi
     info: {
       name: 'Moab 240 Endurance Run',
       summary: 'A loop through the canyon country around Moab, Utah.',
@@ -58,7 +61,7 @@ export const RACES: Race[] = [
   {
     id: 'bigfoot200',
     label: 'BIGFOOT 200',
-    km: 334.6, // 207.9 mi
+    km: 322.0, // 200.1 mi
     info: {
       name: 'Bigfoot 200 Endurance Run',
       summary: "Washington's Cascade Range, from Mount St. Helens to Randle.",

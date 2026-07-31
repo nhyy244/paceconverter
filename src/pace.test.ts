@@ -44,7 +44,7 @@ describe('formatDuration', () => {
 
   it('switches to h:mm:ss at an hour', () => {
     expect(formatDuration(3600)).toBe('1:00:00');
-    expect(formatDuration(12_666)).toBe('3:31:06'); // marathon at 5:00/km
+    expect(formatDuration(12_659)).toBe('3:30:59'); // marathon at 5:00/km
     expect(formatDuration(86_399)).toBe('23:59:59');
   });
 
@@ -58,5 +58,11 @@ describe('formatDuration', () => {
   it('rounds to the nearest second', () => {
     expect(formatDuration(1499.6)).toBe('25:00');
     expect(formatDuration(3600.4)).toBe('1:00:00');
+  });
+
+  it('rounds before choosing the format, so no unit ever reads 60', () => {
+    // Rounding after the branch would give "59:60" and "23:59:60".
+    expect(formatDuration(3599.5)).toBe('1:00:00');
+    expect(formatDuration(86_399.6)).toBe('1d 0h');
   });
 });

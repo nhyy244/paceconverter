@@ -59,13 +59,20 @@ describe('RACES', () => {
     }
   });
 
-  it("states the ultras' distances, not the round number in their names", () => {
+  it("converts each ultra's stated mileage, not the number in its name", () => {
+    // A guard against a mi→km conversion slip, not a check that the mileages
+    // are current — only the organizer's page can settle that.
     const km = Object.fromEntries(RACES.map((race) => [race.id, race.km]));
-    // Named in miles, and longer than the name suggests.
     expect(km['tahoe200']).toBeCloseTo(200.4 * 1.609344, 0);
-    expect(km['moab240']).toBeCloseTo(239.66 * 1.609344, 0);
-    expect(km['bigfoot200']).toBeCloseTo(207.9 * 1.609344, 0);
+    expect(km['moab240']).toBeCloseTo(241.8 * 1.609344, 0);
+    expect(km['bigfoot200']).toBeCloseTo(200.1 * 1.609344, 0);
     expect(km['arizona300']).toBeCloseTo(300.5 * 1.609344, 0);
+
+    // Every one of them is longer than the round number it's named for.
+    expect(km['tahoe200']).toBeGreaterThan(200 * 1.609344);
+    expect(km['moab240']).toBeGreaterThan(240 * 1.609344);
+    expect(km['bigfoot200']).toBeGreaterThan(200 * 1.609344);
+    expect(km['arizona300']).toBeGreaterThan(300 * 1.609344);
   });
 });
 

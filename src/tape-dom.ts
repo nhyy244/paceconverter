@@ -1,4 +1,4 @@
-import { formatDistance, type Race } from './races';
+import { formatDistance, type Race, type RaceInfo } from './races';
 import type { TapeRow } from './tape';
 
 function cell(className: string, text?: string): HTMLElement {
@@ -14,15 +14,24 @@ function cell(className: string, text?: string): HTMLElement {
  */
 export function renderHeader(races: Race[]): DocumentFragment {
   const fragment = document.createDocumentFragment();
-  fragment.append(cell('cell km', 'MIN / KM'), cell('cell mi', 'MIN / MI'));
+
+  const km = cell('cell km', 'MIN / KM');
+  km.setAttribute('role', 'columnheader');
+  const mi = cell('cell mi', 'MIN / MI');
+  mi.setAttribute('role', 'columnheader');
+  fragment.append(km, mi);
 
   for (const race of races) {
     const heading = cell('cell race');
+    heading.setAttribute('role', 'columnheader');
+
     // Distance and info button share a line, so the button can't collide with
     // the pins or the heading text.
     const meta = cell('race-meta');
     meta.append(cell('race-dist', formatDistance(race.km)));
-    if (race.info) meta.append(infoButton(race), infoPanel(race));
+    if (race.info) {
+      meta.append(infoButton(race.id, race.info), infoPanel(race.id, race.info, race.km));
+    }
 
     heading.append(cell('race-name', race.label), meta);
     fragment.append(heading);
@@ -31,26 +40,31 @@ export function renderHeader(races: Race[]): DocumentFragment {
   return fragment;
 }
 
-function infoButton(race: Race): HTMLElement {
+/** The id tying an info button to the panel it discloses. */
+function panelId(raceId: string): string {
+  return `tip-${raceId}`;
+}
+
+function infoButton(raceId: string, info: RaceInfo): HTMLElement {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'info';
-  button.dataset.race = race.id;
+  button.dataset.race = raceId;
+  button.textContent = 'i';
+  // A disclosure, not a dialog: pressing it reveals the panel in place and
+  // leaves focus where it was.
   button.setAttribute('aria-expanded', 'false');
-  button.setAttribute('aria-label', `About the ${race.info?.name}`);
-  // Drawn in CSS so it stays crisp and doesn't depend on a glyph.
-  button.append(cell('info-mark', 'i'));
+  button.setAttribute('aria-controls', panelId(raceId));
+  button.setAttribute('aria-label', `About the ${info.name}`);
   return button;
 }
 
-function infoPanel(race: Race): HTMLElement {
-  const info = race.info!;
+function infoPanel(raceId: string, info: RaceInfo, km: number): HTMLElement {
   const panel = document.createElement('div');
   panel.className = 'tip';
-  panel.dataset.race = race.id;
+  panel.id = panelId(raceId);
+  panel.dataset.race = raceId;
   panel.hidden = true;
-  panel.setAttribute('role', 'dialog');
-  panel.setAttribute('aria-label', info.name);
 
   const name = document.createElement('strong');
   name.textContent = info.name;
@@ -60,7 +74,7 @@ function infoPanel(race: Race): HTMLElement {
 
   // The organizer reroutes these courses between editions, so the distance the
   // times are built from is worth stating rather than implying.
-  const distance = cell('tip-note', `${formatDistance(race.km)} · course varies by edition`);
+  const distance = cell('tip-note', `${formatDistance(km)} · course varies by edition`);
 
   const link = document.createElement('a');
   link.href = info.url;
@@ -79,9 +93,20 @@ export function renderTape(rows: TapeRow[]): DocumentFragment {
     const el = document.createElement('div');
     el.className = row.major ? 'row major' : 'row minor';
     el.dataset.secPerKm = String(row.secPerKm);
+    el.setAttribute('role', 'row');
 
-    el.append(cell('cell km', row.kmLabel), cell('cell mi', row.miLabel));
-    for (const label of row.raceLabels) el.append(cell('cell race', label));
+    // The pace names the row; every other cell is a value read against it.
+    const km = cell('cell km', row.kmLabel);
+    km.setAttribute('role', 'rowheader');
+    const mi = cell('cell mi', row.miLabel);
+    mi.setAttribute('role', 'cell');
+    el.append(km, mi);
+
+    for (const label of row.raceLabels) {
+      const race = cell('cell race', label);
+      race.setAttribute('role', 'cell');
+      el.append(race);
+    }
 
     fragment.append(el);
   }

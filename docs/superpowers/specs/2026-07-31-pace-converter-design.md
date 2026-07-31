@@ -66,10 +66,12 @@ Eleven distances, canonical in km. The standard ones are exact by definition
 
 The four ultras — Tahoe 200, Moab 240, Bigfoot 200 and Arizona Monster 300 — are
 Destination Trail events, and their real courses are both longer than their names
-suggest and **rerouted between editions**. Their km values are conversions of the
-organizer's currently stated mileage, recorded in the source next to each entry,
-and the info panel says so rather than implying a fixed distance. Worth
-re-checking before each season.
+suggest and **rerouted between editions**. The organizer publishes more than one
+figure for some of them, so each km value converts the mileage printed on the
+exact page its info panel links to: anyone who follows the link sees the same
+number, which would not be true of the per-edition pages. The mileage is recorded
+beside each entry in `races.ts`, and the panel states that the course varies
+rather than implying a fixed distance. Worth re-checking before each season.
 
 ### Tape (`tape.ts`)
 
@@ -112,11 +114,22 @@ rather than absolutely positioned so it cannot collide with the safety pins.
 - It is `position: fixed`, which is what keeps the tape's `overflow` from
   clipping it, and placed by pure arithmetic: centred under the button, nudged
   back inside the viewport, flipped above when there's no room below.
+- It is a **disclosure, not a dialog**: `aria-expanded` plus `aria-controls` on
+  the button, and focus stays put. An earlier `role="dialog"` was wrong, since
+  nothing moved focus into it.
 - One panel at a time. It closes on Escape (returning focus to its button), on a
   press anywhere else, on resize, and when the tape moves under it — it is
   anchored to a point on screen, not to the column.
-- Buttons and links are excluded from the drag gesture, since suppressing the
-  pointer default would rob them of focus.
+- Buttons, links **and the panels themselves** are excluded from the drag
+  gesture: suppressing the pointer default would rob controls of focus, and
+  pressing a panel to read it would otherwise pan the tape and dismiss it.
+- The circle is 14 px but its hit area is 26 × 28 px, extended leftward across
+  the distance label — anything spilling rightward is painted over by the next
+  column.
+
+The tape carries table semantics (`role="table"`, with the pace cell as each
+row's `rowheader`). Thirteen unlabelled columns of numbers were navigable enough
+at two columns and are not at thirteen.
 
 ### Gesture (`drag.ts`)
 
@@ -154,8 +167,11 @@ header strip, and safety-pin dots at the plate's top corners.
 - Palette: bib blue `#1749C8`, plate white `#FFFFFF`, ink `#101010`,
   background paper `#F5F4F1`, mile tint `#EDF2FD`, mile ink `#17307A`,
   minor gray `#73736E`, minor mile blue `#4A5F94`, race-column tint `#FAF9F6`,
-  pinned edge `rgba(16,16,16,.14)` (all AA-checked, including minor gray on the
-  race tint at 4.53:1).
+  pinned edge `rgba(16,16,16,.14)`, link `#1749C8` (`#A7BCF0` in dark).
+  All AA-checked in both themes, including minor gray on the race tint (4.53:1)
+  and the panel link on the dark plate (9.37:1). `--blue` is a *background*
+  token and fails as body text on the dark plate, which is why links carry their
+  own `--link`.
 - Type: Archivo Black (header/display), Archivo (numerals + UI), tabular
   figures throughout (`font-variant-numeric: tabular-nums`) so the tape doesn't
   shimmy while scrolling. Fonts self-hosted (no CDN request on load).
@@ -191,7 +207,9 @@ Vitest, colocated unit tests:
 - `pace.ts`: conversion known-values (5:00/km → 8:03/mi), rounding behavior,
   formatting edges (`0:0x` seconds padding, large minutes like `160:56`).
 - `races.ts`: the standard distances, unique ids, ultras carrying their info and
-  organizer links, and that each ultra's km exceeds the number in its name.
+  organizer links, and each ultra's km matching its recorded mileage — a guard
+  against a conversion slip, not a check that the mileage is current, which only
+  the organizer's page can settle.
 - `tape.ts`: row count for the configured range, first/last row values, step
   spacing, major/minor classification, and a finish time per race per row.
 - `tape-dom.ts` (happy-dom): row and heading markup, info buttons only on the
