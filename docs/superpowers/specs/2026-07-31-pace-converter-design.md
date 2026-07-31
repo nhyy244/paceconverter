@@ -63,7 +63,8 @@ index.html
 
 ### Shell (`main.ts` + `index.html`)
 
-- Sticky header with column labels `MIN/KM | MIN/MI`.
+- Fixed header with column labels `MIN/KM | MIN/MI`: a flex column layout keeps
+  the header outside the scroll container, so it never scrolls.
 - On load, scroll so **5:00 min/km** is vertically centered.
 - Tabular numerals (`font-variant-numeric: tabular-nums`) so the tape doesn't
   shimmy while scrolling.
@@ -79,7 +80,7 @@ header strip, and safety-pin dots at the plate's top corners.
 
 - Palette: bib blue `#1749C8`, plate white `#FFFFFF`, ink `#101010`,
   background paper `#F5F4F1`, mile tint `#EDF2FD`, mile ink `#17307A`,
-  minor gray `#9C9C98`.
+  minor gray `#73736E`, minor mile blue `#4A5F94` (AA-checked).
 - Type: Archivo Black (header/display), Archivo (numerals + UI), tabular
   figures throughout (`font-variant-numeric: tabular-nums`) so the tape doesn't
   shimmy while scrolling. Fonts self-hosted (no CDN request on load).
@@ -87,7 +88,7 @@ header strip, and safety-pin dots at the plate's top corners.
   the faint blue tint with deep-blue numerals — the shade change is both the
   separation and the "which unit am I reading" cue.
 - Softness: no hard outer border — soft shadow, rounded plate corners, pins at
-  the top corners only. The tape scrolls edge-to-edge under the sticky header.
+  the top corners only. The tape scrolls edge-to-edge under the fixed header.
 - Mobile-first: full-viewport plate; desktop constrains to a centered
   max-width (~480 px).
 - Dark variant via `prefers-color-scheme` derived from the same palette
