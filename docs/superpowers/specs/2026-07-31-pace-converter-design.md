@@ -153,13 +153,20 @@ hidden and the cursor is `grab`/`grabbing`.
 - **Mouse and pen** get the same feel from a pointer binding: press records the
   scroll offset, movement re-derives it from the total distance pulled, and
   release hands the tracked velocity to a friction-decayed coast.
-- **On touch the horizontal axis snaps to column boundaries.** A two-axis
-  scroller has no directional lock, so a mostly-vertical swipe drifts sideways
-  and the columns wobble; snapping returns the drift and lands deliberate swipes
-  on a column. Confined to touch so it doesn't fight the mouse fling.
-- The document itself cannot scroll and has `overscroll-behavior: none`: iOS
-  rubber-bands a page that exactly fits the viewport, which otherwise dragged
-  the whole plate when the tape hit its end.
+- **Nothing rubber-bands.** The document cannot scroll and carries
+  `overscroll-behavior: none` — iOS bounces a page that exactly fits the
+  viewport, which dragged the whole plate when the tape hit its end — and the
+  tape uses `none` rather than `contain` so its own ends are hard stops too.
+  Bouncing left past the first column exposed a bare gutter; bouncing past the
+  last row exposed empty plate.
+- **Horizontal scroll-snap was tried and removed.** It was meant to stop a
+  mostly-vertical swipe drifting sideways, since a two-axis scroller has no
+  directional lock. But `scroll-padding-left`, added so a snapped column
+  wouldn't hide behind the pinned one, creates a snap target at a negative
+  scroll offset: Chrome clamps it to zero, WebKit rests there, and on iOS the
+  tape sat permanently overscrolled with a column-wide empty gutter down its
+  left edge. The drift is still unaddressed; any retry needs testing on a real
+  iOS device, which is what caught this.
 - Release velocity comes from the samples of the last 100 ms, so a drag that
   came to rest doesn't fling; it is capped at 4 px/ms because coalesced pointer
   events can arrive a fraction of a millisecond apart.
