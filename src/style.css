@@ -222,7 +222,10 @@ body {
   flex: 1;
   /* Both axes: rows scroll vertically, columns pan horizontally. */
   overflow: auto;
-  overscroll-behavior: contain;
+  /* `none`, not `contain`: this also stops the tape's own rubber-band, so the
+     ends are hard stops. Bouncing left past the first column exposed a bare
+     gutter, and bouncing past the last row a band of empty plate. */
+  overscroll-behavior: none;
   /* The tape is pulled by hand; a scrollbar would break the bib. */
   cursor: grab;
   touch-action: pan-x pan-y;
@@ -238,23 +241,12 @@ body {
   user-select: none;
 }
 
-/* Touch has no directional lock on a two-axis scroller, so a mostly-vertical
-   swipe drifts sideways and the columns wobble under your thumb. Snapping the
-   horizontal axis sends that drift back to the column you were reading, and
-   makes deliberate sideways moves land on a column instead of between two.
-   Confined to touch so it doesn't fight the mouse fling. */
-@media (hover: none) {
-  .tape {
-    scroll-snap-type: x mandatory;
-    /* The pinned pace column covers the left edge, so snap past it. */
-    scroll-padding-left: var(--pace-col);
-  }
-
-  /* Only the thirteen headings are snap targets. On cells it would be thousands. */
-  .head .cell {
-    scroll-snap-align: start;
-  }
-}
+/* No horizontal scroll-snap here, deliberately. Snapping was tried to stop a
+   mostly-vertical swipe drifting sideways, but `scroll-padding-left` (added so a
+   snapped column wouldn't hide behind the pinned one) creates a snap target at a
+   negative scroll offset. Chrome clamps that to zero; WebKit rests there, so on
+   iOS the tape sat permanently overscrolled with an empty column-wide gutter
+   down its left edge and the pins floating over nothing. */
 
 .tape:focus-visible {
   outline: 3px solid var(--blue);
