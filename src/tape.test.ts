@@ -1,38 +1,50 @@
 import { describe, expect, it } from 'vitest';
 import { buildRows, DEFAULT_CONFIG } from './tape';
+import { formatPace, kmToMiSeconds, MAX_SEC_PER_KM, MIN_SEC_PER_KM, STEP_SEC } from './pace';
 import { RACES } from './races';
+
+/** Rows the configured range should produce, inclusive of both ends. */
+const EXPECTED_ROWS = (MAX_SEC_PER_KM - MIN_SEC_PER_KM) / STEP_SEC + 1;
 
 describe('buildRows', () => {
   const rows = buildRows(DEFAULT_CONFIG);
 
-  it('creates one row per 5 s step from 2:00 to 100:00 min/km', () => {
-    expect(rows).toHaveLength(1177); // (6000 - 120) / 5 + 1
+  it('creates one row per step across the whole range', () => {
+    // Derived rather than hard-coded, so widening the range is a one-line
+    // change to pace.ts and still catches an off-by-one here.
+    expect(rows).toHaveLength(EXPECTED_ROWS);
+    expect(Number.isInteger(EXPECTED_ROWS)).toBe(true);
   });
 
   it('starts and ends exactly on the range endpoints', () => {
     expect(rows[0]).toMatchObject({
-      secPerKm: 120,
-      kmLabel: '2:00',
-      miLabel: '3:13',
-      major: true,
+      secPerKm: MIN_SEC_PER_KM,
+      kmLabel: formatPace(MIN_SEC_PER_KM),
+      miLabel: formatPace(kmToMiSeconds(MIN_SEC_PER_KM)),
     });
     expect(rows.at(-1)).toMatchObject({
-      secPerKm: 6000,
-      kmLabel: '100:00',
-      miLabel: '160:56',
-      major: true,
+      secPerKm: MAX_SEC_PER_KM,
+      kmLabel: formatPace(MAX_SEC_PER_KM),
+      miLabel: formatPace(kmToMiSeconds(MAX_SEC_PER_KM)),
     });
+
+    // Spot-check the current range's actual labels, so a wrong constant shows up
+    // as a failure and not just a self-consistent tautology.
+    expect(rows[0].kmLabel).toBe('1:30');
+    expect(rows[0].miLabel).toBe('2:25');
+    expect(rows.at(-1)!.kmLabel).toBe('100:00');
+    expect(rows.at(-1)!.miLabel).toBe('160:56');
   });
 
-  it('steps by 5 seconds', () => {
-    expect(rows[1].secPerKm).toBe(125);
-    expect(rows[2].secPerKm).toBe(130);
+  it('steps by the configured interval', () => {
+    expect(rows[1].secPerKm).toBe(MIN_SEC_PER_KM + STEP_SEC);
+    expect(rows[2].secPerKm).toBe(MIN_SEC_PER_KM + 2 * STEP_SEC);
   });
 
   it('marks 10 s rows major and 5 s rows minor', () => {
-    expect(rows[0].major).toBe(true); // 120
-    expect(rows[1].major).toBe(false); // 125
-    expect(rows[2].major).toBe(true); // 130
+    expect(rows[0].major).toBe(true); // 1:30
+    expect(rows[1].major).toBe(false); // 1:35
+    expect(rows[2].major).toBe(true); // 1:40
   });
 
   it('derives mile labels through the domain conversion', () => {
@@ -71,6 +83,6 @@ describe('buildRows', () => {
 
   it('accepts a narrower race list', () => {
     const rowsWithOneRace = buildRows(DEFAULT_CONFIG, [{ id: '5k', label: '5K', km: 5 }]);
-    expect(rowsWithOneRace[0].raceLabels).toEqual(['10:00']); // 5 km at 2:00/km
+    expect(rowsWithOneRace[0].raceLabels).toEqual(['7:30']); // 5 km at 1:30/km
   });
 });

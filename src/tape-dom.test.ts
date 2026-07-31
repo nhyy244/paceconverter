@@ -1,6 +1,7 @@
 /** @vitest-environment happy-dom */
 import { describe, expect, it } from 'vitest';
 import { buildRows, DEFAULT_CONFIG } from './tape';
+import { MAX_SEC_PER_KM, MIN_SEC_PER_KM, STEP_SEC } from './pace';
 import { RACES } from './races';
 import {
   renderHeader,
@@ -15,22 +16,22 @@ describe('renderTape', () => {
     const rows = Array.from(frag.children) as HTMLElement[];
 
     expect(rows).toHaveLength(3);
-    expect(rows[0].className).toBe('row major'); // 120 s
-    expect(rows[1].className).toBe('row minor'); // 125 s
-    expect(rows[0].dataset.secPerKm).toBe('120');
+    expect(rows[0].className).toBe('row major'); // 90 s
+    expect(rows[1].className).toBe('row minor'); // 95 s
+    expect(rows[0].dataset.secPerKm).toBe(String(MIN_SEC_PER_KM));
 
     const cells = Array.from(rows[0].children) as HTMLElement[];
     expect(cells).toHaveLength(2 + RACES.length);
 
     const [km, mi] = cells;
     expect(km.className).toBe('cell km');
-    expect(km.textContent).toBe('2:00');
+    expect(km.textContent).toBe('1:30');
     expect(mi.className).toBe('cell mi');
-    expect(mi.textContent).toBe('3:13');
+    expect(mi.textContent).toBe('2:25');
 
-    // 5K at 2:00/km, in the first race column.
+    // 5K at 1:30/km, in the first race column.
     expect(cells[2].className).toBe('cell race');
-    expect(cells[2].textContent).toBe('10:00');
+    expect(cells[2].textContent).toBe('7:30');
   });
 
   it('marks up rows as table rows headed by the pace', () => {
@@ -45,7 +46,7 @@ describe('renderTape', () => {
 
   it('renders the full default tape', () => {
     const frag = renderTape(buildRows(DEFAULT_CONFIG));
-    expect(frag.children).toHaveLength(1177);
+    expect(frag.children).toHaveLength((MAX_SEC_PER_KM - MIN_SEC_PER_KM) / STEP_SEC + 1);
   });
 });
 
