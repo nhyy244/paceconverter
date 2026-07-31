@@ -123,7 +123,9 @@ rather than absolutely positioned so it cannot collide with the safety pins.
 - Buttons, links **and the panels themselves** are excluded from the drag
   gesture: suppressing the pointer default would rob controls of focus, and
   pressing a panel to read it would otherwise pan the tape and dismiss it.
-- The circle is 14 px but its hit area is 26 × 28 px, extended leftward across
+- The `i` is upright, not italic: slanted at 9 px it read as a diagonal line
+  through the circle rather than a letter.
+- The circle is 16 px but its hit area is 28 × 30 px, extended leftward across
   the distance label — anything spilling rightward is painted over by the next
   column.
 

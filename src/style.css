@@ -350,17 +350,20 @@ body {
 .info {
   position: relative;
   flex: none;
-  width: 14px;
-  height: 14px;
-  padding: 0;
+  width: 16px;
+  height: 16px;
+  /* A lowercase i sits high in its em box, which reserves descender space it
+     never uses; the top padding drops it onto the circle's centre. */
+  padding: 1px 0 0;
   border: 1px solid rgba(255, 255, 255, 0.75);
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.14);
   color: var(--head-text);
   font-family: 'Archivo', system-ui, sans-serif;
-  font-size: 9px;
+  /* Upright, and big enough in the circle to read as a letter: italic at 9 px
+     made the stem a diagonal line across the middle. */
+  font-size: 11px;
   font-weight: 700;
-  font-style: italic;
   line-height: 1;
   letter-spacing: 0;
   display: grid;
@@ -368,7 +371,7 @@ body {
   cursor: pointer;
 }
 
-/* The circle stays 14 px, but a thumb gets 26 x 28 px to aim at — reaching
+/* The circle stays 16 px, but a thumb gets 28 x 30 px to aim at — reaching
    left across the distance label, since anything spilling right is painted
    over by the next column. */
 .info::after {
