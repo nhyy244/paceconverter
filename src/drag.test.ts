@@ -7,72 +7,58 @@ import {
   FLING_STOP_SPEED,
 } from './drag';
 
+/** A sample that only moves vertically, which most of these cases care about. */
+const down = (y: number, t: number) => ({ x: 0, y, t });
+
 describe('flingVelocity', () => {
   it('measures px/ms across the sampled window', () => {
     // 60 px downward over 100 ms.
-    expect(flingVelocity([{ y: 0, t: 0 }, { y: 60, t: 100 }])).toBeCloseTo(0.6);
+    expect(flingVelocity([down(0, 0), down(60, 100)]).y).toBeCloseTo(0.6);
   });
 
   it('is negative when the pointer travelled up', () => {
-    expect(flingVelocity([{ y: 60, t: 0 }, { y: 0, t: 100 }])).toBeCloseTo(-0.6);
+    expect(flingVelocity([down(60, 0), down(0, 100)]).y).toBeCloseTo(-0.6);
+  });
+
+  it('measures both axes independently', () => {
+    const velocity = flingVelocity([
+      { x: 0, y: 0, t: 0 },
+      { x: 40, y: -20, t: 100 },
+    ]);
+
+    expect(velocity.x).toBeCloseTo(0.4);
+    expect(velocity.y).toBeCloseTo(-0.2);
   });
 
   it('ignores samples older than the window', () => {
     // The 0 ms sample is outside a 100 ms window ending at 500 ms, so only the
     // final two samples count: 5 px over 50 ms.
-    const velocity = flingVelocity(
-      [
-        { y: 0, t: 0 },
-        { y: 100, t: 450 },
-        { y: 105, t: 500 },
-      ],
-      100,
-    );
-    expect(velocity).toBeCloseTo(0.1);
+    const velocity = flingVelocity([down(0, 0), down(100, 450), down(105, 500)], 100);
+    expect(velocity.y).toBeCloseTo(0.1);
   });
 
   it('returns no velocity when the drag came to rest before release', () => {
-    expect(
-      flingVelocity([
-        { y: 40, t: 400 },
-        { y: 40, t: 480 },
-      ]),
-    ).toBe(0);
+    expect(flingVelocity([down(40, 400), down(40, 480)])).toEqual({ x: 0, y: 0 });
   });
 
   it('returns no velocity for a press without movement', () => {
-    expect(flingVelocity([{ y: 10, t: 0 }])).toBe(0);
-    expect(flingVelocity([])).toBe(0);
+    expect(flingVelocity([down(10, 0)])).toEqual({ x: 0, y: 0 });
+    expect(flingVelocity([])).toEqual({ x: 0, y: 0 });
   });
 
   it('caps the speed of samples that arrived a fraction of a millisecond apart', () => {
     // 50 px in 0.1 ms is 500 px/ms — an artefact of event coalescing, not a hand.
-    expect(
-      flingVelocity([
-        { y: 0, t: 0 },
-        { y: 50, t: 0.1 },
-      ]),
-    ).toBe(FLING_MAX_SPEED);
-    expect(
-      flingVelocity([
-        { y: 50, t: 0 },
-        { y: 0, t: 0.1 },
-      ]),
-    ).toBe(-FLING_MAX_SPEED);
+    expect(flingVelocity([down(0, 0), down(50, 0.1)]).y).toBe(FLING_MAX_SPEED);
+    expect(flingVelocity([down(50, 0), down(0, 0.1)]).y).toBe(-FLING_MAX_SPEED);
   });
 
   it('leaves a hand-speed flick uncapped', () => {
     // 32 px over two frames is ~1 px/ms — a normal flick.
-    expect(flingVelocity([{ y: 0, t: 0 }, { y: 32, t: 32 }])).toBeCloseTo(1);
+    expect(flingVelocity([down(0, 0), down(32, 32)]).y).toBeCloseTo(1);
   });
 
   it('returns no velocity when samples share a timestamp', () => {
-    expect(
-      flingVelocity([
-        { y: 0, t: 7 },
-        { y: 30, t: 7 },
-      ]),
-    ).toBe(0);
+    expect(flingVelocity([down(0, 7), down(30, 7)])).toEqual({ x: 0, y: 0 });
   });
 });
 

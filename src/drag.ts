@@ -1,9 +1,17 @@
 /** A (position, time) sample of the pointer taken during a drag. */
 export interface Sample {
+  /** Pointer's viewport X, in px. */
+  x: number;
   /** Pointer's viewport Y, in px. */
   y: number;
   /** Event timestamp, in ms. */
   t: number;
+}
+
+/** Pointer speed in px/ms along each axis, positive right and down. */
+export interface Velocity {
+  x: number;
+  y: number;
 }
 
 /** Fraction of velocity surviving each millisecond after release. */
@@ -25,21 +33,31 @@ export const FLING_MAX_SPEED = 4;
 /** How many recent samples to keep while dragging. */
 const MAX_SAMPLES = 8;
 
+function clampSpeed(speed: number): number {
+  return Math.max(-FLING_MAX_SPEED, Math.min(FLING_MAX_SPEED, speed));
+}
+
 /**
- * Release velocity in px/ms, positive when the pointer was travelling down.
+ * Release velocity, positive right and down.
  *
  * Only samples from the last `windowMs` count, so a drag that came to rest
  * before the user let go doesn't fling.
  */
-export function flingVelocity(samples: Sample[], windowMs = FLING_WINDOW_MS): number {
+export function flingVelocity(samples: Sample[], windowMs = FLING_WINDOW_MS): Velocity {
+  const still = { x: 0, y: 0 };
   const last = samples[samples.length - 1];
-  if (!last) return 0;
+  if (!last) return still;
+
   const first = samples.find((sample) => last.t - sample.t <= windowMs);
-  if (!first || first === last) return 0;
+  if (!first || first === last) return still;
+
   const elapsed = last.t - first.t;
-  if (elapsed <= 0) return 0;
-  const velocity = (last.y - first.y) / elapsed;
-  return Math.max(-FLING_MAX_SPEED, Math.min(FLING_MAX_SPEED, velocity));
+  if (elapsed <= 0) return still;
+
+  return {
+    x: clampSpeed((last.x - first.x) / elapsed),
+    y: clampSpeed((last.y - first.y) / elapsed),
+  };
 }
 
 /** Velocity remaining after `dtMs` of friction. */
@@ -47,9 +65,14 @@ export function decayVelocity(velocity: number, dtMs: number): number {
   return velocity * Math.pow(FLING_FRICTION_PER_MS, dtMs);
 }
 
+/** True once a fling has slowed to a stop along both axes. */
+function spent(velocity: Velocity): boolean {
+  return Math.abs(velocity.x) < FLING_STOP_SPEED && Math.abs(velocity.y) < FLING_STOP_SPEED;
+}
+
 /**
- * Makes `el` behave like a physical tape: press it, pull, and it follows the
- * pointer; let go mid-pull and it coasts to a stop.
+ * Makes `el` behave like a physical tape: press it, pull in any direction, and
+ * it follows the pointer; let go mid-pull and it coasts to a stop.
  *
  * Touch is deliberately left to the browser, whose own panning is already this
  * gesture and does it better — OS-matched momentum and rubber-banding at the
@@ -59,7 +82,9 @@ export function decayVelocity(velocity: number, dtMs: number): number {
  */
 export function enableDragScroll(el: HTMLElement): () => void {
   let activePointer: number | null = null;
+  let startX = 0;
   let startY = 0;
+  let startScrollLeft = 0;
   let startScrollTop = 0;
   let samples: Sample[] = [];
   let flingFrame: number | null = null;
@@ -71,8 +96,8 @@ export function enableDragScroll(el: HTMLElement): () => void {
     }
   }
 
-  function startFling(velocity: number): void {
-    if (Math.abs(velocity) < FLING_STOP_SPEED) return;
+  function startFling(velocity: Velocity): void {
+    if (spent(velocity)) return;
     let remaining = velocity;
     let previous = performance.now();
 
@@ -80,16 +105,18 @@ export function enableDragScroll(el: HTMLElement): () => void {
       const dt = now - previous;
       previous = now;
 
-      const before = el.scrollTop;
-      el.scrollTop = before - remaining * dt;
-      remaining = decayVelocity(remaining, dt);
+      const beforeLeft = el.scrollLeft;
+      const beforeTop = el.scrollTop;
+      el.scrollLeft = beforeLeft - remaining.x * dt;
+      el.scrollTop = beforeTop - remaining.y * dt;
+      remaining = {
+        x: decayVelocity(remaining.x, dt),
+        y: decayVelocity(remaining.y, dt),
+      };
 
-      // Stops both when the fling runs out and when the tape hits an end.
-      const stillMoving = el.scrollTop !== before;
-      flingFrame =
-        stillMoving && Math.abs(remaining) >= FLING_STOP_SPEED
-          ? requestAnimationFrame(step)
-          : null;
+      // Stops both when the fling runs out and when the tape hits its ends.
+      const stillMoving = el.scrollLeft !== beforeLeft || el.scrollTop !== beforeTop;
+      flingFrame = stillMoving && !spent(remaining) ? requestAnimationFrame(step) : null;
     };
 
     flingFrame = requestAnimationFrame(step);
@@ -97,11 +124,18 @@ export function enableDragScroll(el: HTMLElement): () => void {
 
   function onPointerDown(event: PointerEvent): void {
     if (event.pointerType === 'touch' || event.button !== 0) return;
+    // Controls are for pressing, not for grabbing — suppressing the default
+    // below would rob them of focus. Info panels are excluded too: pressing one
+    // to read it must not pan the tape, which would dismiss it.
+    if ((event.target as Element | null)?.closest('button, a, .tip')) return;
+
     stopFling();
     activePointer = event.pointerId;
+    startX = event.clientX;
     startY = event.clientY;
+    startScrollLeft = el.scrollLeft;
     startScrollTop = el.scrollTop;
-    samples = [{ y: event.clientY, t: event.timeStamp }];
+    samples = [{ x: event.clientX, y: event.clientY, t: event.timeStamp }];
     el.classList.add('dragging');
     // Capture keeps the drag alive when the pointer leaves the tape. It's an
     // improvement, not a requirement, and it rejects pointers the browser no
@@ -117,8 +151,9 @@ export function enableDragScroll(el: HTMLElement): () => void {
 
   function onPointerMove(event: PointerEvent): void {
     if (event.pointerId !== activePointer) return;
+    el.scrollLeft = startScrollLeft - (event.clientX - startX);
     el.scrollTop = startScrollTop - (event.clientY - startY);
-    samples.push({ y: event.clientY, t: event.timeStamp });
+    samples.push({ x: event.clientX, y: event.clientY, t: event.timeStamp });
     if (samples.length > MAX_SAMPLES) samples.shift();
   }
 

@@ -1,9 +1,15 @@
 # Pace Ruler
 
-Running pace conversions — min/km and min/mi side by side, as one long ruler.
-No inputs, no buttons: grab the tape, pull it to the pace you care about, and
-read across. Styled as a race bib. Fully static; everything is computed
-client-side.
+Running pace conversions as one long ruler. Every row is a pace: min/km beside
+min/mi, then a finish time for each race distance from a 5K to a 300-mile ultra.
+No inputs, no buttons — grab the tape, pull it to the pace you care about, and
+read across; pan sideways for the longer races. Styled as a race bib. Fully
+static; everything is computed client-side.
+
+The four ultras (Tahoe 200, Moab 240, Bigfoot 200, Arizona Monster 300) carry an
+info button with a summary and a link to the organizer's page. Their courses are
+rerouted between editions, so `src/races.ts` records where each distance came
+from — worth re-checking before each season.
 
 ## Develop
 
