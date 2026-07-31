@@ -70,11 +70,32 @@ index.html
 
 ## UI / visual
 
-- Mobile-first: full-viewport tape, two equal columns, thin center divider.
-- Desktop: same layout constrained to a centered max-width (~480 px) column.
-- Dark/light via `prefers-color-scheme`; no toggle in v1.
-- Visual reference: approved mockup at
-  `.superpowers/brainstorm/3909-1785493882/content/two-column-v3.html` (option A).
+UI/UX quality is the headline requirement: intuitive, beautiful, professional,
+with a "running" identity.
+
+**Visual direction: "Race Bib" (approved via mockups).** The app reads as a race
+bib: a white plate with heavy black tabular numerals, a race-organizer blue
+header strip, and safety-pin dots at the plate's top corners.
+
+- Palette: bib blue `#1749C8`, plate white `#FFFFFF`, ink `#101010`,
+  background paper `#F5F4F1`, mile tint `#EDF2FD`, mile ink `#17307A`,
+  minor gray `#9C9C98`.
+- Type: Archivo Black (header/display), Archivo (numerals + UI), tabular
+  figures throughout (`font-variant-numeric: tabular-nums`) so the tape doesn't
+  shimmy while scrolling. Fonts self-hosted (no CDN request on load).
+- Columns as tape, no divider: the km column is white, the mile column carries
+  the faint blue tint with deep-blue numerals — the shade change is both the
+  separation and the "which unit am I reading" cue.
+- Softness: no hard outer border — soft shadow, rounded plate corners, pins at
+  the top corners only. The tape scrolls edge-to-edge under the sticky header.
+- Mobile-first: full-viewport plate; desktop constrains to a centered
+  max-width (~480 px).
+- Dark variant via `prefers-color-scheme` derived from the same palette
+  (paper → near-black, plate → dark ink surface, tint/blue adjusted for
+  contrast); no manual toggle in v1. All text meets WCAG AA contrast in both.
+- Visual references (approved mockups):
+  `.superpowers/brainstorm/3909-1785493882/content/two-column-v3.html` (layout, option A)
+  and `visual-direction-v2.html` (identity, option B).
 
 ## Error handling
 
