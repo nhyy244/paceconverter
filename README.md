@@ -39,8 +39,16 @@ moves on.
 the build command, and the output directory, so the defaults need no editing.
 It also sets the caching and security headers: hashed assets under `/assets/`
 are immutable for a year, `index.html` must revalidate, and a strict
-`Content-Security-Policy` limits the page to its own origin. The app makes no
-external requests at runtime — fonts are bundled — so `connect-src` is `'none'`.
+`Content-Security-Policy` limits the page to its own origin. Nothing is fetched
+from a third party at runtime — the fonts are bundled.
+
+**Analytics.** Vercel Web Analytics and Speed Insights are injected in
+production builds (skipped when served from localhost, where `/_vercel` doesn't
+exist). Both need switching on per project under **Analytics** and **Speed
+Insights** in the Vercel dashboard before any data appears — the code alone
+isn't enough. Both load and report over this origin under `/_vercel`, which is
+why the CSP's `connect-src` is `'self'`: at `'none'` the scripts would load and
+every beacon would be silently dropped.
 
 **Anywhere else**, the Docker image serves the same build behind nginx with the
 headers kept in step:
@@ -49,13 +57,14 @@ headers kept in step:
     docker run --rm -p 8080:80 pace-converter
     # open http://localhost:8080
 
-Adding an analytics script or any other third-party resource means loosening the
-CSP in both `vercel.json` and `nginx.conf`; they are deliberately identical.
+Adding any third-party resource means loosening the CSP in both `vercel.json`
+and `nginx.conf`; they are deliberately identical. Note that a same-origin
+beacon counts — that is how the analytics packages report, and why `connect-src`
+had to move off `'none'`.
 
-This catches same-origin beacons too, which is the easiest way to be caught out:
-Vercel Analytics and Speed Insights load their script fine under `script-src
-'self'` but POST to `/_vercel/insights/*`, so `connect-src 'none'` silently
-discards every event. Enabling either means allowing that path.
+Self-hosting outside Vercel serves the same build, but the two `/_vercel` script
+requests will 404 harmlessly; drop the inject calls at the foot of `main.ts` to
+be rid of them.
 
 ## Design docs
 

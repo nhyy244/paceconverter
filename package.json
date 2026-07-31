@@ -16,7 +16,9 @@
   },
   "dependencies": {
     "@fontsource/archivo": "^5.2.5",
-    "@fontsource/archivo-black": "^5.2.5"
+    "@fontsource/archivo-black": "^5.2.5",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0"
   },
   "devDependencies": {
     "happy-dom": "^18.0.1",
