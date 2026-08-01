@@ -39,6 +39,16 @@ export const RACES: Race[] = [
   { id: '50k', label: '50K', km: 50 },
   { id: '100k', label: '100K', km: 100 },
   {
+    id: 'bigfoot200',
+    label: 'BIGFOOT 200',
+    km: 322.0, // 200.1 mi
+    info: {
+      name: 'Bigfoot 200 Endurance Run',
+      summary: "Washington's Cascade Range, from Mount St. Helens to Randle.",
+      url: 'https://www.destinationtrailrun.com/bigfoot',
+    },
+  },
+  {
     id: 'tahoe200',
     label: 'TAHOE 200',
     km: 322.5, // 200.4 mi
@@ -56,16 +66,6 @@ export const RACES: Race[] = [
       name: 'Moab 240 Endurance Run',
       summary: 'A loop through the canyon country around Moab, Utah.',
       url: 'https://www.destinationtrailrun.com/moab',
-    },
-  },
-  {
-    id: 'bigfoot200',
-    label: 'BIGFOOT 200',
-    km: 322.0, // 200.1 mi
-    info: {
-      name: 'Bigfoot 200 Endurance Run',
-      summary: "Washington's Cascade Range, from Mount St. Helens to Randle.",
-      url: 'https://www.destinationtrailrun.com/bigfoot',
     },
   },
   {
