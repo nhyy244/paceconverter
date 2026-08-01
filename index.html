@@ -53,9 +53,12 @@
           stay rounded — and would clip a button straddling its edge. Hidden
           until the script that gives it a second view to swap to has run.
 
-          The glyph is two 170° arcs of a radius-7 circle centred on (12, 12),
-          each with a chevron head, rotationally symmetric about that centre:
-          two arrows chasing each other round.
+          The glyph is two arrows chasing each other round: 130° arcs of a
+          radius-7 circle centred on (12, 12), rotationally symmetric about that
+          centre, each finished with a solid head aligned to the tangent. The
+          heads are filled triangles rather than stroked chevrons because at
+          38 px a chevron's inner barb falls inside the circle and the whole
+          thing closes up into a blob.
         -->
         <button
           id="swap"
@@ -68,17 +71,13 @@
         >
           <span class="swap-disc">
             <svg class="swap-glyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <g
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M5.03 12.61A7 7 0 0 1 18.76 10.19" />
-                <path d="M16.16 8.01 18.76 10.19 19.92 6.99" />
-                <path d="M18.97 11.39A7 7 0 0 1 5.24 13.81" />
-                <path d="M7.84 15.99 5.24 13.81 4.08 17.01" />
+              <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <path d="M5.03 12.61A7 7 0 0 1 14.42 5.43" />
+                <path d="M18.97 11.39A7 7 0 0 1 9.58 18.57" />
+              </g>
+              <g fill="currentColor">
+                <path d="M18.8 8.22 14.47 8.48 17.56 4.05Z" />
+                <path d="M5.2 15.78 9.53 15.52 6.44 19.95Z" />
               </g>
             </svg>
           </span>
