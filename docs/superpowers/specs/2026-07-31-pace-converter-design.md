@@ -55,8 +55,12 @@ index.html
 - Pace formatting: `m:ss` with unpadded minutes (`8:03`, `96:33`, `160:56`). No
   hours unit — pace is conventionally read in minutes even when large.
 - Finish-time formatting scales to the distance: `m:ss` under an hour, `h:mm:ss`
-  under a day, `Dd Hh` beyond — which is how a 200-miler's time is quoted anyway.
-  The slowest row on the longest course reads `6d 17h`.
+  at an hour and beyond, with the hours continuing to count past a day rather
+  than rolling over. An ultra is timed in hours — that is how the results are
+  published and how runners talk about them, and a day-and-hour reading throws
+  the minutes away. The slowest row on the longest course reads `161:12:00`.
+  (Superseded 2026-08-01: this previously read `Dd Hh` past a day, `6d 17h` on
+  that same row.)
 - All functions are pure and independently testable.
 
 ### Races (`races.ts`)

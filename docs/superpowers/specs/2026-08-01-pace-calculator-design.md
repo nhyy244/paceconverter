@@ -220,7 +220,7 @@ a transition retargets from wherever the glyph currently is.
 | `7:75` | Rejected; computed field blanks. |
 | Distance `0` while solving for pace | Blanks — a zero-distance pace is undefined. |
 | Pace `0:00` while solving for distance | Blanks, same reason. |
-| Very long time (300 mi at 20:00/km) | `161:12:00`. The tape's `formatDuration` would say `6d 17h`, but the time field is an input and has to be able to re-read its own value, so the calculator uses a `formatClock` extracted from it that keeps counting hours. |
+| Very long time (300 mi at 20:00/km) | `161:12:00` — hours keep counting past a day. `formatClock` in `pace.ts` is now the only finish-time format, shared with the tape, so a time read off the ruler can be typed straight back into this field. |
 | Unit changed with an unparseable value | Value is left exactly as typed rather than blanked. |
 
 ## Testing
