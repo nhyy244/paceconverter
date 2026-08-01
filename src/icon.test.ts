@@ -33,12 +33,29 @@ describe('the tab icon', () => {
     expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"'.replace(/"/g, "'"));
   });
 
-  it('draws a runner on the bib blue rather than a bare square', () => {
+  it('draws the runner in the bib blue', () => {
     const svg = decodeURIComponent(iconHref().slice('data:image/svg+xml,'.length));
     expect(svg).toContain('#1749c8');
     // Head, plus the strokes that make up the limbs and the speed lines.
     expect(svg).toContain('<circle');
     expect((svg.match(/<path/g) ?? []).length).toBeGreaterThanOrEqual(7);
+  });
+
+  it('has no tile behind it — the figure is the mark', () => {
+    const svg = decodeURIComponent(iconHref().slice('data:image/svg+xml,'.length));
+    expect(svg).not.toContain('<rect');
+  });
+
+  /**
+   * The bib blue on Chrome's dark tab strip is about 1.9:1 — a runner nobody
+   * can see. The stylesheet lightens it there, so the colour must stay in CSS
+   * rather than migrating onto the paths, where no media query could reach it.
+   */
+  it('lightens itself for a dark tab strip', () => {
+    const svg = decodeURIComponent(iconHref().slice('data:image/svg+xml,'.length));
+    expect(svg).toContain('prefers-color-scheme:dark');
+    expect(svg).toContain('#a7bcf0');
+    expect(svg).not.toMatch(/<path[^>]*stroke=/);
   });
 
   it('points iOS at a PNG, which is all it will accept for a home screen', () => {
