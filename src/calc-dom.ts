@@ -1,8 +1,11 @@
 import {
   computedField,
+  distanceProblem,
+  durationProblem,
   formatDistanceValue,
   fromKm,
   fromSecPerKm,
+  paceProblem,
   parseDistanceInput,
   parseDurationInput,
   parsePaceInput,
@@ -10,9 +13,11 @@ import {
   toKm,
   toSecPerKm,
   touch,
+  TYPEABLE,
   type DistanceUnit,
   type Field,
   type PaceUnit,
+  type Problem,
   type Recency,
   type Values,
 } from './calc';
@@ -28,6 +33,26 @@ const DISTANCE_UNITS: Array<[DistanceUnit, string]> = [
   ['km', 'km'],
   ['mi', 'mi'],
 ];
+
+/**
+ * A nudge, not a telling-off. Lower case, no exclamation, and it says what the
+ * field wants rather than what the user did — `seconds go from 00 to 59` is a
+ * fact about clocks, where `invalid seconds` is a verdict about them.
+ */
+const MESSAGES: Record<Field, { sixtieths: string; shape: string }> = {
+  pace: {
+    sixtieths: 'seconds go from 00 to 59',
+    shape: 'a pace looks like 5:30',
+  },
+  time: {
+    sixtieths: 'minutes and seconds go from 00 to 59',
+    shape: 'a time looks like 1:56:02',
+  },
+  distance: {
+    sixtieths: '',
+    shape: 'a distance looks like 21.1',
+  },
+};
 
 function element<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -71,6 +96,24 @@ function unitSelect(
   return select;
 }
 
+/**
+ * The line under each field. It says the one useful thing it can: what's wrong
+ * with what's been typed, or — for the pace — the same pace in the other unit.
+ * The space is held open so nothing shifts as the message comes and goes.
+ */
+function note(field: Field): HTMLElement {
+  const el = document.createElement('p');
+  el.className = 'field-note';
+  el.id = noteId(field);
+  // Polite, not assertive: a nudge that waits its turn rather than interrupting.
+  el.setAttribute('aria-live', 'polite');
+  return el;
+}
+
+function noteId(field: Field): string {
+  return `calc-${field}-note`;
+}
+
 function row(field: Field, label: string, controls: HTMLElement[]): HTMLElement {
   const wrapper = element('div', 'field');
   wrapper.dataset.field = field;
@@ -82,7 +125,11 @@ function row(field: Field, label: string, controls: HTMLElement[]): HTMLElement 
   const line = element('div', 'field-controls');
   line.append(...controls);
 
-  wrapper.append(caption, line);
+  const hint = note(field);
+  const input = controls[0];
+  input.setAttribute('aria-describedby', hint.id);
+
+  wrapper.append(caption, line, hint);
   return wrapper;
 }
 
@@ -95,15 +142,8 @@ export function renderCalculator(): HTMLElement {
 
   const body = element('div', 'calc-body');
 
-  const pace = row('pace', 'PACE', [input('pace', '5:30'), unitSelect('pace', PACE_UNITS, 'km')]);
-  // The pace in the unit the user isn't entering it in. This is the
-  // min/km → min/mi conversion, and it reads whichever way round the unit is.
-  const alt = element('p', 'field-note');
-  alt.id = 'calc-pace-alt';
-  pace.append(alt);
-
   body.append(
-    pace,
+    row('pace', 'PACE', [input('pace', '5:30'), unitSelect('pace', PACE_UNITS, 'km')]),
     row('distance', 'DISTANCE', [
       input('distance', '21.0975'),
       unitSelect('distance', DISTANCE_UNITS, 'km'),
@@ -140,10 +180,18 @@ export function enableCalculator(panel: HTMLElement): () => void {
     distance: panel.querySelector<HTMLInputElement>('#calc-distance')!,
     time: panel.querySelector<HTMLInputElement>('#calc-time')!,
   } as const;
+  const notes = {
+    pace: panel.querySelector<HTMLElement>('#calc-pace-note')!,
+    distance: panel.querySelector<HTMLElement>('#calc-distance-note')!,
+    time: panel.querySelector<HTMLElement>('#calc-time-note')!,
+  } as const;
   const paceUnit = panel.querySelector<HTMLSelectElement>('#calc-pace-unit')!;
   const distanceUnit = panel.querySelector<HTMLSelectElement>('#calc-distance-unit')!;
-  const alt = panel.querySelector<HTMLElement>('#calc-pace-alt')!;
   const rows = panel.querySelectorAll<HTMLElement>('.field');
+
+  // Fields the user has finished with. A problem that more typing could fix
+  // waits until then; nobody wants to be corrected mid-word.
+  const settled = new Set<Field>();
 
   // Time is the answer to begin with: a pace and a distance is what people
   // arrive with, and how long it takes is what they came to find out.
@@ -175,6 +223,24 @@ export function enableCalculator(panel: HTMLElement): () => void {
     return formatClock(value);
   }
 
+  function problemFor(field: Field): Problem | null {
+    if (field === 'pace') return paceProblem(fields.pace.value);
+    if (field === 'distance') return distanceProblem(fields.distance.value);
+    return durationProblem(fields.time.value);
+  }
+
+  /**
+   * What to say under a field, if anything. A `sixtieths` slip is said at once
+   * — no amount of further typing turns 4:60 into a pace — while everything
+   * else waits until the field is left.
+   */
+  function message(field: Field): string {
+    const problem = problemFor(field);
+    if (!problem) return '';
+    if (problem !== 'sixtieths' && !settled.has(field)) return '';
+    return MESSAGES[field][problem === 'sixtieths' ? 'sixtieths' : 'shape'];
+  }
+
   function recalculate(): void {
     const answer = computedField(order);
 
@@ -188,24 +254,61 @@ export function enableCalculator(panel: HTMLElement): () => void {
 
     for (const el of rows) el.classList.toggle('computed', el.dataset.field === answer);
 
-    // The readout is the pace in the unit the field isn't using — whether that
-    // pace was typed or worked out.
+    // The pace's line does double duty: the same pace in the other unit when
+    // there is one, and why there isn't when there isn't.
     const other: PaceUnit = paceUnit.value === 'km' ? 'mi' : 'km';
-    alt.textContent =
+    const conversion =
       solved.pace === null
         ? ''
         : `= ${formatPace(Math.round(fromSecPerKm(solved.pace, other)))} min/${other}`;
+
+    for (const field of ['pace', 'distance', 'time'] as const) {
+      // The answer is generated, never typed, so it is never at fault.
+      const problem = field === answer ? '' : message(field);
+      notes[field].textContent = problem || (field === 'pace' ? conversion : '');
+      notes[field].classList.toggle('is-problem', problem !== '');
+    }
+  }
+
+  function fieldOf(target: EventTarget | null): Field | undefined {
+    if (!(target instanceof HTMLElement)) return undefined;
+    return target.closest<HTMLElement>('.field')?.dataset.field as Field | undefined;
+  }
+
+  /**
+   * Refuse anything that isn't a number or a separator that field uses, rather
+   * than accepting letters and then explaining they were wrong. Covers pasting
+   * and dropping as well as typing, since all three arrive as `beforeinput`.
+   *
+   * A phone's keypad already offers nothing else, so this is really the desktop
+   * keyboard's guard rail.
+   */
+  function onBeforeInput(event: Event): void {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
+
+    const field = fieldOf(target);
+    if (!field) return;
+
+    const { inputType, data, dataTransfer } = event as InputEvent;
+    // Deleting, undoing and moving about are none of our business.
+    if (!inputType.startsWith('insert')) return;
+
+    const incoming = data ?? dataTransfer?.getData('text') ?? '';
+    if (incoming !== '' && !TYPEABLE[field].test(incoming)) event.preventDefault();
   }
 
   function onInput(event: Event): void {
-    const target = event.target as HTMLElement;
     // A <select> fires input as well as change. Changing a unit isn't editing
     // the field, and must not move it to the front of the recency order.
-    if (target instanceof HTMLSelectElement) return;
+    if (event.target instanceof HTMLSelectElement) return;
 
-    const field = target.closest<HTMLElement>('.field')?.dataset.field as Field | undefined;
+    const field = fieldOf(event.target);
     if (!field) return;
 
+    // Typing again means they're mid-thought: hold back anything but a slip
+    // that further typing can't fix.
+    settled.delete(field);
     order = touch(order, field);
     recalculate();
   }
@@ -222,13 +325,17 @@ export function enableCalculator(panel: HTMLElement): () => void {
     const target = event.target;
     if (!(target instanceof HTMLInputElement)) return;
 
-    const field = target.closest<HTMLElement>('.field')?.dataset.field as Field | undefined;
+    const field = fieldOf(target);
     if (!field) return;
 
-    // Display-only: the canonical value is unchanged, so nothing is recomputed
-    // and the recency order stays where it was.
+    // Display-only: the canonical value is unchanged, so the recency order and
+    // every computed value stay exactly where they were.
     const canonical = read(field);
     if (canonical !== null) target.value = display(field, canonical);
+
+    // Now that they've moved on, a half-finished value is worth mentioning.
+    settled.add(field);
+    recalculate();
   }
 
   function onUnitChange(event: Event): void {
@@ -251,6 +358,7 @@ export function enableCalculator(panel: HTMLElement): () => void {
     recalculate();
   }
 
+  panel.addEventListener('beforeinput', onBeforeInput);
   panel.addEventListener('input', onInput);
   // focusout, not blur: blur doesn't bubble to the panel.
   panel.addEventListener('focusout', onFocusOut);
@@ -259,6 +367,7 @@ export function enableCalculator(panel: HTMLElement): () => void {
   recalculate();
 
   return () => {
+    panel.removeEventListener('beforeinput', onBeforeInput);
     panel.removeEventListener('input', onInput);
     panel.removeEventListener('focusout', onFocusOut);
     paceUnit.removeEventListener('change', onUnitChange);

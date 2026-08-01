@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   computedField,
+  distanceProblem,
+  durationProblem,
   formatDistanceValue,
+  paceProblem,
+  TYPEABLE,
   fromKm,
   fromSecPerKm,
   parseDistanceInput,
@@ -129,6 +133,67 @@ describe('parseDistanceInput', () => {
     for (const bad of ['0', '-5', 'abc', '', '5km']) {
       expect(parseDistanceInput(bad)).toBeNull();
     }
+  });
+});
+
+describe('problems', () => {
+  it('says nothing about an empty field', () => {
+    expect(paceProblem('')).toBeNull();
+    expect(durationProblem('  ')).toBeNull();
+    expect(distanceProblem('')).toBeNull();
+  });
+
+  it('says nothing about a pace that reads fine', () => {
+    for (const good of ['5:30', '5.30', '530', '5', '4:59']) {
+      expect(paceProblem(good)).toBeNull();
+    }
+  });
+
+  // The case worth speaking up about: no amount of further typing rescues it.
+  it('calls out seconds over 59', () => {
+    for (const bad of ['4:60', '4:70', '460', '4,99']) {
+      expect(paceProblem(bad)).toBe('sixtieths');
+    }
+  });
+
+  it('calls out an over-59 field in a time too', () => {
+    expect(durationProblem('1:60:00')).toBe('sixtieths');
+    expect(durationProblem('1:20:75')).toBe('sixtieths');
+  });
+
+  // These can still turn into something valid, so they wait for the field to
+  // be left rather than nagging mid-word.
+  it('treats a half-typed value as incomplete, not wrong', () => {
+    expect(paceProblem('5:')).toBe('incomplete');
+    expect(paceProblem('0')).toBe('incomplete');
+    expect(distanceProblem('0')).toBe('incomplete');
+  });
+
+  it('says nothing about a trailing decimal point, which already reads as 5', () => {
+    expect(distanceProblem('5.')).toBeNull();
+  });
+
+  it('calls out text that is not a number at all', () => {
+    expect(paceProblem('abc')).toBe('unreadable');
+    expect(distanceProblem('5km')).toBe('unreadable');
+    expect(durationProblem('1:2:3:4')).toBe('unreadable');
+  });
+});
+
+describe('TYPEABLE', () => {
+  it('lets a pace take digits and either separator', () => {
+    for (const ok of ['5', '5:30', '5.30', '5,30', '']) expect(TYPEABLE.pace.test(ok)).toBe(true);
+  });
+
+  it('keeps letters and signs out of every field', () => {
+    for (const field of ['pace', 'time', 'distance'] as const) {
+      for (const bad of ['a', '-', ' ', 'e', '/']) expect(TYPEABLE[field].test(bad)).toBe(false);
+    }
+  });
+
+  it('keeps the colon out of a distance, which has no use for one', () => {
+    expect(TYPEABLE.distance.test('21.1')).toBe(true);
+    expect(TYPEABLE.distance.test('21:1')).toBe(false);
   });
 });
 

@@ -68,36 +68,46 @@ function digitGroups(digits: string, maxParts: number): number[] {
 }
 
 /**
- * Split clock text into its parts. Every field after the first counts a
- * sixtieth, so anything over 59 there is a typo rather than a big number.
+ * Why a field can't be read.
+ *
+ * `incomplete` means more typing could still fix it — a trailing separator, or
+ * a lone `0` on the way to `0:30`. Those are worth holding back until the field
+ * is left, because nobody wants to be told they're wrong halfway through typing
+ * `4:30`. A `sixtieths` overflow can never become valid by typing more, which
+ * is why `4:60` is worth mentioning straight away.
  */
-function clockParts(text: string, maxParts: number): number[] | null {
+export type Problem = 'sixtieths' | 'incomplete' | 'unreadable';
+
+type ClockRead = { ok: true; parts: number[] } | { ok: false; problem: Problem };
+
+/**
+ * Split clock text into its parts, or say why it won't split. Every field after
+ * the first counts a sixtieth, so anything over 59 there is a typo rather than
+ * a big number. Returns null when nothing has been typed at all.
+ */
+function readClock(text: string, maxParts: number): ClockRead | null {
   const trimmed = text.trim();
   if (trimmed === '') return null;
+
+  // Somebody who has just typed the separator is mid-way through, not wrong.
+  if (SEPARATORS.test(trimmed.slice(-1))) return { ok: false, problem: 'incomplete' };
 
   const parts = /^\d+$/.test(trimmed) && trimmed.length > 2
     ? digitGroups(trimmed, maxParts)
     : trimmed.split(SEPARATORS).map((part) => (/^\d+$/.test(part) ? Number(part) : NaN));
 
-  if (parts.some(Number.isNaN)) return null;
-  if (parts.slice(1).some((part) => part > 59)) return null;
-  return parts;
+  if (parts.some(Number.isNaN) || parts.length > maxParts) {
+    return { ok: false, problem: 'unreadable' };
+  }
+  if (parts.slice(1).some((part) => part > 59)) return { ok: false, problem: 'sixtieths' };
+  return { ok: true, parts };
 }
 
-/** `5:30` → 330, `5.30` → 330, `530` → 330, `5` → 300. */
-export function parsePaceInput(text: string): number | null {
-  const parts = clockParts(text, 2);
-  if (!parts || parts.length > 2) return null;
-
-  const total = parts[0] * 60 + (parts[1] ?? 0);
-  return total > 0 ? total : null;
+function paceSeconds(parts: number[]): number {
+  return parts[0] * 60 + (parts[1] ?? 0);
 }
 
-/** `1:56:04` → 6964, `15604` → 6964, `56:04` → 3364, `45` → 2700. */
-export function parseDurationInput(text: string): number | null {
-  const parts = clockParts(text, 3);
-  if (!parts || parts.length > 3) return null;
-
+function durationSeconds(parts: number[]): number {
   // Read from the right: the last field is always the smallest unit present.
   const total = parts.reduceRight(
     (sum, part, index) => sum + part * 60 ** (parts.length - 1 - index),
@@ -105,18 +115,77 @@ export function parseDurationInput(text: string): number | null {
   );
   // A single bare field is minutes, not seconds — nobody gives a race time in
   // seconds, and `45` for a 45-minute 10K is the common case.
-  const seconds = parts.length === 1 ? total * 60 : total;
+  return parts.length === 1 ? total * 60 : total;
+}
+
+/** `5:30` → 330, `5.30` → 330, `530` → 330, `5` → 300. */
+export function parsePaceInput(text: string): number | null {
+  const read = readClock(text, 2);
+  if (!read?.ok) return null;
+
+  const total = paceSeconds(read.parts);
+  return total > 0 ? total : null;
+}
+
+/** `1:56:04` → 6964, `15604` → 6964, `56:04` → 3364, `45` → 2700. */
+export function parseDurationInput(text: string): number | null {
+  const read = readClock(text, 3);
+  if (!read?.ok) return null;
+
+  const seconds = durationSeconds(read.parts);
   return seconds > 0 ? seconds : null;
 }
+
+/** What's wrong with this pace, if anything. Null for empty or fine. */
+export function paceProblem(text: string): Problem | null {
+  const read = readClock(text, 2);
+  if (!read) return null;
+  if (!read.ok) return read.problem;
+  // A bare `0` is on the way to `0:30`, so it waits rather than complains.
+  return paceSeconds(read.parts) > 0 ? null : 'incomplete';
+}
+
+/** What's wrong with this time, if anything. Null for empty or fine. */
+export function durationProblem(text: string): Problem | null {
+  const read = readClock(text, 3);
+  if (!read) return null;
+  if (!read.ok) return read.problem;
+  return durationSeconds(read.parts) > 0 ? null : 'incomplete';
+}
+
+const DISTANCE_SHAPE = /^(\d+\.?\d*|\.\d+)$/;
 
 /** `21,0975` → 21.0975. A decimal comma is what half of Europe types. */
 export function parseDistanceInput(text: string): number | null {
   const trimmed = text.trim().replace(',', '.');
-  if (!/^(\d+\.?\d*|\.\d+)$/.test(trimmed)) return null;
+  if (!DISTANCE_SHAPE.test(trimmed)) return null;
 
   const value = Number(trimmed);
   return value > 0 ? value : null;
 }
+
+/** What's wrong with this distance, if anything. Null for empty or fine. */
+export function distanceProblem(text: string): Problem | null {
+  const trimmed = text.trim().replace(',', '.');
+  if (trimmed === '') return null;
+  if (!DISTANCE_SHAPE.test(trimmed)) {
+    // `5.` is somebody part-way through `5.5`.
+    return trimmed.endsWith('.') ? 'incomplete' : 'unreadable';
+  }
+  // A lone `0` is on the way to `0.5`.
+  return Number(trimmed) > 0 ? null : 'incomplete';
+}
+
+/**
+ * What may be typed into each field. Digits plus the separators that field
+ * actually uses — a pace has no decimal point to speak of, and a distance has
+ * no colon. Letters are simply refused rather than parsed and rejected.
+ */
+export const TYPEABLE: Record<Field, RegExp> = {
+  pace: /^[\d:.,]*$/,
+  time: /^[\d:.,]*$/,
+  distance: /^[\d.,]*$/,
+};
 
 /** Returns `values` with `computed` filled in from the other two. */
 export function solve(values: Values, computed: Field): Values {

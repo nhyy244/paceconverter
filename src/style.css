@@ -14,6 +14,9 @@
   /* --blue is a background colour; as text on the plate it needs its own token
      so the dark theme can lighten it without lightening the heading strip. */
   --link: #1749c8;
+  /* For the calculator's nudges. Warm rather than red: a half-typed pace is
+     unfinished, not an error, and red would say otherwise. */
+  --nudge: #8a5300;
   --shadow: 0 2px 14px rgba(16, 16, 16, 0.12);
   --tip-shadow: 0 8px 28px rgba(16, 16, 16, 0.22);
   --tip-border: rgba(16, 16, 16, 0.08);
@@ -32,6 +35,7 @@
     --race-alt: #1b1c21;
     --pin-edge: rgba(255, 255, 255, 0.16);
     --link: #a7bcf0;
+    --nudge: #e2b169;
     --shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
     --tip-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
     --tip-border: rgba(255, 255, 255, 0.1);
@@ -806,12 +810,21 @@ body {
 }
 
 .field-note {
-  /* Held open, so the row doesn't jump when a pace appears or goes. */
+  /* Held open, so nothing jumps as a conversion or a nudge comes and goes. */
   min-height: 1.1em;
   margin: 0;
   color: var(--minor-mi);
   font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
+}
+
+/* A nudge rather than an alarm: warm, quieter than the value it's about, and
+   deliberately not red — nothing here is broken, a number just isn't finished
+   yet. Small enough to skim past once it's been read. */
+.field-note.is-problem {
+  color: var(--nudge);
+  font-size: 0.74rem;
+  font-variant-numeric: normal;
 }
 
 @media (min-width: 760px) {

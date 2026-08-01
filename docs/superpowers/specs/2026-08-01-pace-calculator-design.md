@@ -79,6 +79,29 @@ negotiable as the *display* form, so the parsers widen instead:
 - Three or more bare digits group from the right, which is how a keypad gets
   used: `530` → 5:30, `15602` → 1:56:02. One or two digits stay whole minutes,
   so `45` remains a 45-minute 10K rather than becoming 45 seconds.
+**Saying why, and refusing letters** (added 2026-08-01). Rejecting a pace
+silently left no clue what was wrong, so each field carries one line beneath it:
+
+- The line says what the field wants, not what the user did — `seconds go from
+  00 to 59`, `a pace looks like 5:30`. Lower case, no exclamation, and coloured
+  with a warm `--nudge` rather than red: a half-typed pace is unfinished, not
+  broken. Measured 6.3:1 light and 9.1:1 dark.
+- The pace's line does double duty, showing the other unit's pace when there is
+  one. Every line's height is reserved, so nothing shifts as messages come and go.
+- Timing is the whole trick. A seconds-over-59 slip is said **at once**, because
+  no further typing rescues `4:60`. Everything else — a trailing separator, a
+  lone `0` — waits until the field is left, so nobody is corrected halfway
+  through typing `4:30`. `calc.ts` distinguishes these as `Problem`:
+  `'sixtieths'` (immediate), `'incomplete'` and `'unreadable'` (deferred).
+- The field holding the answer never carries a message: its value is generated,
+  so it can't be the user's mistake.
+- `aria-live="polite"` and `aria-describedby`, so it's announced without
+  interrupting. Not `role="alert"`, which is the anxious version.
+- A `beforeinput` handler refuses anything but digits and the separators that
+  field uses (`TYPEABLE`), covering paste and drop as well as typing. A phone's
+  keypad already offers nothing else, so this is the desktop keyboard's guard
+  rail. Deletions always pass through.
+
 - On `focusout` the field is rewritten in canonical form, so `530` visibly
   becomes `5:30`. That keeps the panel consistent with the tape and teaches the
   shorthand without a line of help text. Rewriting happens on the way out, never

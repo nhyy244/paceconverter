@@ -34,7 +34,18 @@ function computed(): string | undefined {
 }
 
 function alt(): string {
-  return panel.querySelector<HTMLElement>('#calc-pace-alt')!.textContent ?? '';
+  return note('pace');
+}
+
+function note(name: string): string {
+  return panel.querySelector<HTMLElement>(`#calc-${name}-note`)!.textContent ?? '';
+}
+
+function typeKey(name: string, text: string): boolean {
+  const event = new Event('beforeinput', { bubbles: true, cancelable: true });
+  Object.defineProperty(event, 'inputType', { value: 'insertText' });
+  Object.defineProperty(event, 'data', { value: text });
+  return field(name).dispatchEvent(event);
 }
 
 beforeEach(() => {
@@ -248,6 +259,141 @@ describe('typing on a keypad', () => {
     expect(computed()).toBe('time');
     leave('pace');
     expect(computed()).toBe('time');
+  });
+});
+
+/**
+ * A rejected pace used to do nothing at all, which left the user with no idea
+ * why. The nudge says what the field wants, without making a drama of it.
+ */
+describe('the nudge under a field', () => {
+  it('says nothing before anything has been typed', () => {
+    expect(note('pace')).toBe('');
+    expect(note('distance')).toBe('');
+  });
+
+  it('gives the seconds range as soon as they go over 59', () => {
+    type('pace', '4:60');
+    expect(note('pace')).toBe('seconds go from 00 to 59');
+  });
+
+  it('does the same for 4:70 and for bare digits', () => {
+    type('pace', '4:70');
+    expect(note('pace')).toBe('seconds go from 00 to 59');
+    type('pace', '460');
+    expect(note('pace')).toBe('seconds go from 00 to 59');
+  });
+
+  it('mentions minutes as well in a time', () => {
+    type('distance', '10');
+    type('time', '1:60:00');
+    expect(note('time')).toBe('minutes and seconds go from 00 to 59');
+  });
+
+  it('gives the line back to the conversion the moment the pace is fixed', () => {
+    type('pace', '4:60');
+    expect(note('pace')).toBe('seconds go from 00 to 59');
+    type('pace', '4:50');
+    expect(note('pace')).toBe('= 7:47 min/mi');
+  });
+
+  // Being corrected halfway through typing 4:30 would be maddening.
+  it('stays quiet about a half-typed pace while it is being typed', () => {
+    type('pace', '4:');
+    expect(note('pace')).toBe('');
+    // `4:3` is 4:03 on the way to 4:30, and reads as a pace in its own right.
+    type('pace', '4:3');
+    expect(note('pace')).toBe('= 6:31 min/mi');
+  });
+
+  it('reads a bare minute count as a pace rather than as unfinished', () => {
+    // `4` is 4:00, so it gets its conversion, not a nudge.
+    type('pace', '4');
+    expect(note('pace')).toBe('= 6:26 min/mi');
+  });
+
+  it('mentions the shape once the field is left unfinished', () => {
+    type('pace', '4:');
+    leave('pace');
+    expect(note('pace')).toBe('a pace looks like 5:30');
+  });
+
+  it('describes a distance in its own terms', () => {
+    type('pace', '5:00');
+    type('distance', '0');
+    leave('distance');
+    expect(note('distance')).toBe('a distance looks like 21.1');
+  });
+
+  it('goes quiet again when the field is emptied', () => {
+    type('pace', '4:60');
+    expect(note('pace')).not.toBe('');
+    type('pace', '');
+    expect(note('pace')).toBe('');
+  });
+
+  it('never blames the field holding the answer', () => {
+    type('pace', '5:00');
+    type('distance', '10');
+    expect(computed()).toBe('time');
+    leave('time');
+    expect(note('time')).toBe('');
+  });
+
+  it('marks a nudge so it can be styled apart from the conversion', () => {
+    type('pace', '4:60');
+    expect(panel.querySelector('#calc-pace-note')!.classList.contains('is-problem')).toBe(true);
+    type('pace', '4:50');
+    expect(panel.querySelector('#calc-pace-note')!.classList.contains('is-problem')).toBe(false);
+  });
+
+  it('points each field at its own nudge for a screen reader', () => {
+    for (const name of ['pace', 'distance', 'time']) {
+      expect(field(name).getAttribute('aria-describedby')).toBe(`calc-${name}-note`);
+      expect(panel.querySelector(`#calc-${name}-note`)!.getAttribute('aria-live')).toBe('polite');
+    }
+  });
+});
+
+/**
+ * The desktop keyboard can offer letters where a phone's keypad cannot, so the
+ * fields refuse them outright rather than accepting them and complaining.
+ */
+describe('what can be typed', () => {
+  it('takes digits and the separators a pace uses', () => {
+    for (const ch of ['5', ':', '.', ',']) expect(typeKey('pace', ch)).toBe(true);
+  });
+
+  it('refuses letters', () => {
+    for (const ch of ['a', 'e', 'z']) expect(typeKey('pace', ch)).toBe(false);
+  });
+
+  it('refuses signs and spaces', () => {
+    for (const ch of ['-', '+', ' ', '/']) expect(typeKey('pace', ch)).toBe(false);
+  });
+
+  it('refuses a colon in the distance, which has no use for one', () => {
+    expect(typeKey('distance', '.')).toBe(true);
+    expect(typeKey('distance', ':')).toBe(false);
+  });
+
+  it('refuses a pasted word but allows a pasted pace', () => {
+    const paste = (name: string, text: string) => {
+      const event = new Event('beforeinput', { bubbles: true, cancelable: true });
+      Object.defineProperty(event, 'inputType', { value: 'insertFromPaste' });
+      Object.defineProperty(event, 'data', { value: null });
+      Object.defineProperty(event, 'dataTransfer', { value: { getData: () => text } });
+      return field(name).dispatchEvent(event);
+    };
+    expect(paste('pace', 'about five')).toBe(false);
+    expect(paste('pace', '5:30')).toBe(true);
+  });
+
+  it('never blocks a deletion', () => {
+    const event = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(event, 'inputType', { value: 'deleteContentBackward' });
+    Object.defineProperty(event, 'data', { value: null });
+    expect(field('pace').dispatchEvent(event)).toBe(true);
   });
 });
 
