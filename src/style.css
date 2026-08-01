@@ -83,7 +83,10 @@ body {
 }
 
 .masthead {
-  padding: 14px 0 11px;
+  /* The bottom padding is clearance for the view toggle, which straddles the
+     plate's top edge and would otherwise sit on the last line of this
+     paragraph. On desktop .page's gap already provides it. */
+  padding: 14px 0 24px;
 }
 
 .masthead h1 {
@@ -111,12 +114,27 @@ body {
   line-height: 1.45;
 }
 
-/* ---- The bib plate ---- */
-.plate {
+/* ---- The plate's wrapper ----
+   The plate clips its own overflow so the tape's corners stay rounded, which
+   would also clip a button straddling its edge. The view toggle hangs off this
+   instead, and the wrapper takes the plate's old place in the page's column.
+
+   The toggle's geometry is stated once, here: how far its centre sits in from
+   the corner, and how wide the disc is. */
+.plate-wrap {
   position: relative;
   width: min(100%, 480px);
   flex: 1;
   min-height: 0;
+  --swap-x: 44px;
+  --swap-size: 34px;
+}
+
+/* ---- The bib plate ---- */
+.plate {
+  position: relative;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--plate);
@@ -150,8 +168,18 @@ body {
 
   .masthead,
   .footnote,
-  .plate {
+  .plate-wrap {
     width: min(100%, 1180px);
+  }
+
+  .plate-wrap {
+    /* Roomier disc, and it crosses to the other corner — see .swap. */
+    --swap-x: 40px;
+    --swap-size: 38px;
+  }
+
+  .masthead {
+    padding-bottom: 11px;
   }
 
   .masthead h1 {
@@ -207,6 +235,133 @@ body {
   right: 12px;
 }
 
+/* ---- The view toggle ----
+   Straddling the plate's top edge, far enough in from the corner to clear the
+   safety pin. Top-left on a phone, where a right thumb is nowhere near it;
+   top-right from the desktop breakpoint up. */
+.swap {
+  position: absolute;
+  top: calc(var(--swap-size) / -2);
+  left: calc(var(--swap-x) - var(--swap-size) / 2);
+  width: var(--swap-size);
+  height: var(--swap-size);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  /* Over the heading strip and the pins both. */
+  z-index: 7;
+}
+
+.swap[hidden] {
+  display: none;
+}
+
+/* The disc is 34 px; a thumb gets 46. */
+.swap::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+
+/* The disc is a child rather than the button itself, so it can grow on hover
+   without dragging the tooltip's text along and blurring it. */
+.swap-disc {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--blue);
+  color: var(--head-text);
+  /* A ring in the page's own colour, so the half of the disc lying over the
+     blue heading strip reads as a notch cut into the bib rather than a sticker
+     sitting on top of it. */
+  box-shadow:
+    0 0 0 3px var(--paper),
+    var(--shadow);
+  transition:
+    transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 180ms ease;
+}
+
+.swap:hover .swap-disc {
+  transform: translateY(-1px) scale(1.08);
+  box-shadow:
+    0 0 0 3px var(--paper),
+    var(--tip-shadow);
+}
+
+.swap:active .swap-disc {
+  transform: scale(0.92);
+}
+
+.swap:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+  border-radius: 50%;
+}
+
+.swap-glyph {
+  width: calc(var(--swap-size) * 0.6);
+  height: calc(var(--swap-size) * 0.6);
+  /* mode.ts adds half a turn per press and never subtracts, so the two arrows
+     always chase forward. The overshoot is the point of the button. */
+  rotate: var(--turn, 0deg);
+  transition: rotate 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* A nudge on hover — enough to hint at which way it is about to go. */
+.swap:hover .swap-glyph {
+  rotate: calc(var(--turn, 0deg) + 12deg);
+}
+
+/* ---- The toggle's tooltip ----
+   A pseudo-element, so it costs no JavaScript and nothing to keep in sync: the
+   text comes straight off the attribute mode.ts already sets beside the label.
+   It hangs off the wrapper, clear of the plate's clipping. */
+.swap::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 9px);
+  left: 0;
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'Archivo', system-ui, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  opacity: 0;
+  scale: 0.94;
+  pointer-events: none;
+  transition:
+    opacity 140ms ease,
+    scale 140ms ease;
+}
+
+.swap:hover::after,
+.swap:focus-visible::after {
+  opacity: 1;
+  scale: 1;
+}
+
+@media (min-width: 760px) {
+  .swap {
+    left: auto;
+    right: calc(var(--swap-x) - var(--swap-size) / 2);
+  }
+
+  /* Anchored to the far side, so it opens back across the page rather than off
+     the edge of it. */
+  .swap::after {
+    left: auto;
+    right: 0;
+  }
+}
+
 /* Only ever seen with JavaScript disabled, where the plate is empty. */
 .fallback {
   margin: 0;
@@ -217,9 +372,71 @@ body {
   text-align: center;
 }
 
+/* ---- The two views ----
+   One grid cell holds both, so neither can shift the other and swapping them
+   costs no layout at all. */
+.views {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+}
+
+.views > * {
+  grid-area: 1 / 1;
+  min-height: 0;
+}
+
+.tape,
+.calc {
+  /* visibility, and never display: none. The tape is ~2,900 elements, and
+     display: none destroys its layout boxes, so every return would pay for a
+     full relayout of them. visibility keeps the boxes — coming back is only a
+     repaint — while still dropping the view out of hit-testing and the tab
+     order. It also means the tape's scroll position survives a round trip for
+     free, because nothing is ever taken out of the document.
+
+     The flip is delayed to the end of the fade, so the outgoing view stays
+     paintable while it fades and is gone the instant it finishes. */
+  transition:
+    opacity 190ms ease,
+    transform 190ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 190ms;
+}
+
+.plate.calc-mode .tape,
+.plate:not(.calc-mode) .calc {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.plate:not(.calc-mode) .tape,
+.plate.calc-mode .calc {
+  opacity: 1;
+  visibility: visible;
+  /* Coming in, visibility flips at once rather than waiting out the fade. */
+  transition-delay: 0s;
+}
+
+/* Only the calculator moves. The tape can't: it holds the ultra columns' info
+   panels, which are position: fixed, and a transformed ancestor would become
+   their containing block and throw every one of them off. */
+.calc {
+  transform: translateY(8px);
+}
+
+.plate.calc-mode .calc {
+  transform: none;
+}
+
+/* The gradient softens the row the plate's bottom edge cuts through. There is
+   no such row on a form. */
+.plate.calc-mode::after {
+  opacity: 0;
+}
+
 /* ---- The tape ---- */
 .tape {
-  flex: 1;
   /* Both axes: rows scroll vertically, columns pan horizontally. */
   overflow: auto;
   /* `none`, not `contain`: this also stops the tape's own rubber-band, so the
@@ -488,8 +705,139 @@ body {
   border-radius: 2px;
 }
 
+/* ---- The calculator ---- */
+.calc {
+  overflow: auto;
+  overscroll-behavior: none;
+}
+
+/* The plate is as tall as the ruler needs; a three-field form is not. Rather
+   than leave the rest as a void under the fields, the body takes the space and
+   centres them in it. It still scrolls if a landscape phone can't fit them. */
+.calc-inner {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* Matches .head .cell's metrics exactly, so the blue strip doesn't change
+   height when the views swap. */
+.calc-head {
+  padding: 21px 4px 10px;
+  background: var(--blue);
+  color: var(--head-text);
+  font-family: 'Archivo Black', 'Archivo', system-ui, sans-serif;
+  font-size: 0.6rem;
+  line-height: 1.1;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+.calc-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 15px;
+  padding: 18px 16px 22px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  color: var(--minor);
+  font-family: 'Archivo Black', 'Archivo', system-ui, sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+}
+
+.field-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.field-input,
+.field-unit {
+  padding: 10px 12px;
+  border: 1px solid var(--pin-edge);
+  border-radius: 10px;
+  background: var(--plate);
+  color: var(--ink);
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.field-input {
+  flex: 1;
+  /* Without this the input's default intrinsic width stops the row shrinking
+     onto a narrow phone. */
+  min-width: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.field-unit {
+  flex: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.field-input:focus-visible,
+.field-unit:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+/* The field being solved for. Tinted like the mile column, which is already
+   this app's colour for "worked out, not measured". */
+.field.computed .field-input {
+  border-color: transparent;
+  background: var(--mi-tint);
+  color: var(--mi-ink);
+}
+
+.field.computed .field-label::before {
+  content: '= ';
+}
+
+.field-note {
+  /* Held open, so the row doesn't jump when a pace appears or goes. */
+  min-height: 1.1em;
+  margin: 0;
+  color: var(--minor-mi);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 760px) {
+  .calc-body {
+    /* A form doesn't want to be 1180 px wide. */
+    width: min(100%, 420px);
+    margin: 0 auto;
+    gap: 18px;
+    padding: 26px 16px 30px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     scroll-behavior: auto !important;
+  }
+
+  /* The swap still happens; it just stops being a performance. The delays go
+     too, or the outgoing view would sit out its visibility delay with nothing
+     fading to justify the wait. */
+  .tape,
+  .calc,
+  .swap-disc,
+  .swap-glyph,
+  .swap::after {
+    transition-duration: 1ms !important;
+    transition-delay: 0s !important;
   }
 }

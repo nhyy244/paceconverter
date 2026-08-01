@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   kmToMiSeconds,
   formatPace,
+  formatClock,
   formatDuration,
   MAX_SEC_PER_KM,
   MIN_SEC_PER_KM,
@@ -70,5 +71,19 @@ describe('formatDuration', () => {
     // Rounding after the branch would give "59:60" and "23:59:60".
     expect(formatDuration(3599.5)).toBe('1:00:00');
     expect(formatDuration(86_399.6)).toBe('1d 0h');
+  });
+});
+
+describe('formatClock', () => {
+  it('gives m:ss under an hour, like a pace', () => {
+    expect(formatClock(3364)).toBe('56:04');
+  });
+
+  it('gives h:mm:ss at an hour and beyond', () => {
+    expect(formatClock(6964)).toBe('1:56:04');
+  });
+
+  it('keeps counting hours past a day, so the value can be typed back in', () => {
+    expect(formatClock(580_320)).toBe('161:12:00');
   });
 });

@@ -7,13 +7,19 @@ import { renderHeader, renderTape } from './tape-dom';
 import { RACES } from './races';
 import { enableDragScroll } from './drag';
 import { enableInfoPanels } from './tooltip';
+import { enableCalculator, renderCalculator } from './calc-dom';
+import { enableModeToggle } from './mode';
 import { inject as injectAnalytics } from '@vercel/analytics';
 import { injectSpeedInsights } from '@vercel/speed-insights';
 
 const plate = document.getElementById('plate');
 const tape = document.getElementById('tape');
 const head = document.getElementById('head');
-if (!plate || !tape || !head) throw new Error('Missing plate, tape, or head container');
+const calc = document.getElementById('calc');
+const swap = document.getElementById('swap') as HTMLButtonElement | null;
+if (!plate || !tape || !head || !calc || !swap) {
+  throw new Error('Missing plate, tape, head, calc, or swap container');
+}
 
 // The tape's width is one column per race plus the two pace columns; the CSS
 // can't count the registry, so tell it.
@@ -34,6 +40,12 @@ if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
 }
 
 enableInfoPanels(head, tape);
+
+// The calculator is built once, alongside the tape, and both stay in the
+// document from here on — the toggle only changes which one is visible.
+calc.append(renderCalculator());
+enableCalculator(calc);
+enableModeToggle({ plate, button: swap, tape, calc });
 
 // The pinned pace column only needs an edge once columns are hidden behind it.
 tape.addEventListener(
