@@ -1,7 +1,7 @@
 import {
   kmToMiSeconds,
   formatPace,
-  formatDuration,
+  formatClock,
   MIN_SEC_PER_KM,
   MAX_SEC_PER_KM,
   STEP_SEC,
@@ -40,7 +40,7 @@ export function buildRows(
       secPerKm: s,
       kmLabel: formatPace(s),
       miLabel: formatPace(kmToMiSeconds(s)),
-      raceLabels: races.map((race) => formatDuration(s * race.km)),
+      raceLabels: races.map((race) => formatClock(s * race.km)),
       major: s % 10 === 0,
     });
   }

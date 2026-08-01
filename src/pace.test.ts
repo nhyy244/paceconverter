@@ -3,7 +3,6 @@ import {
   kmToMiSeconds,
   formatPace,
   formatClock,
-  formatDuration,
   MAX_SEC_PER_KM,
   MIN_SEC_PER_KM,
 } from './pace';
@@ -43,47 +42,37 @@ describe('formatPace', () => {
   });
 });
 
-describe('formatDuration', () => {
-  it('uses m:ss below an hour', () => {
-    expect(formatDuration(1500)).toBe('25:00'); // 5K at 5:00/km
-    expect(formatDuration(3599)).toBe('59:59');
-  });
-
-  it('switches to h:mm:ss at an hour', () => {
-    expect(formatDuration(3600)).toBe('1:00:00');
-    expect(formatDuration(12_659)).toBe('3:30:59'); // marathon at 5:00/km
-    expect(formatDuration(86_399)).toBe('23:59:59');
-  });
-
-  it('switches to days and hours at a day', () => {
-    expect(formatDuration(86_400)).toBe('1d 0h');
-    expect(formatDuration(180_000)).toBe('2d 2h');
-    // The slowest row on the longest course: 20:00/km over 483.6 km.
-    expect(formatDuration(MAX_SEC_PER_KM * 483.6)).toBe('6d 17h');
-  });
-
-  it('rounds to the nearest second', () => {
-    expect(formatDuration(1499.6)).toBe('25:00');
-    expect(formatDuration(3600.4)).toBe('1:00:00');
-  });
-
-  it('rounds before choosing the format, so no unit ever reads 60', () => {
-    // Rounding after the branch would give "59:60" and "23:59:60".
-    expect(formatDuration(3599.5)).toBe('1:00:00');
-    expect(formatDuration(86_399.6)).toBe('1d 0h');
-  });
-});
-
 describe('formatClock', () => {
-  it('gives m:ss under an hour, like a pace', () => {
+  it('uses m:ss below an hour', () => {
+    expect(formatClock(1500)).toBe('25:00'); // 5K at 5:00/km
+    expect(formatClock(3599)).toBe('59:59');
     expect(formatClock(3364)).toBe('56:04');
   });
 
-  it('gives h:mm:ss at an hour and beyond', () => {
+  it('switches to h:mm:ss at an hour', () => {
+    expect(formatClock(3600)).toBe('1:00:00');
     expect(formatClock(6964)).toBe('1:56:04');
+    expect(formatClock(12_659)).toBe('3:30:59'); // marathon at 5:00/km
+    expect(formatClock(86_399)).toBe('23:59:59');
   });
 
-  it('keeps counting hours past a day, so the value can be typed back in', () => {
-    expect(formatClock(580_320)).toBe('161:12:00');
+  // An ultra is timed in hours, not days: runners quote a 200-miler as a
+  // 40-hour finish, and rolling over to "1d 16h" throws away the minutes.
+  it('keeps counting hours past a day rather than rolling into days', () => {
+    expect(formatClock(86_400)).toBe('24:00:00');
+    expect(formatClock(180_000)).toBe('50:00:00');
+    // The slowest row on the longest course: 20:00/km over 483.6 km.
+    expect(formatClock(MAX_SEC_PER_KM * 483.6)).toBe('161:12:00');
+  });
+
+  it('rounds to the nearest second', () => {
+    expect(formatClock(1499.6)).toBe('25:00');
+    expect(formatClock(3600.4)).toBe('1:00:00');
+  });
+
+  it('rounds before choosing the format, so no unit ever reads 60', () => {
+    // Rounding after the branch would give "59:60".
+    expect(formatClock(3599.5)).toBe('1:00:00');
+    expect(formatClock(86_399.6)).toBe('24:00:00');
   });
 });

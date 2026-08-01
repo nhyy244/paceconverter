@@ -73,13 +73,14 @@ describe('buildRows', () => {
     expect(time('100k')).toBe('8:20:00');
   });
 
-  it('reports multi-day ultra times in days and hours', () => {
+  it('reports multi-day ultra times in hours, which is how they are quoted', () => {
     const row500 = rows.find((r) => r.secPerKm === 300)!;
     const arizona = row500.raceLabels[RACES.findIndex((race) => race.id === 'arizona300')];
 
     // 483.6 km at 5:00/km is 145 080 s — nobody runs one at that pace, but the
-    // tape has to render it, and it has to read as days.
-    expect(arizona).toBe('1d 16h');
+    // tape has to render it, and past a day the hours keep counting rather than
+    // rolling over: "1d 16h" would lose the minutes an ultra is timed to.
+    expect(arizona).toBe('40:18:00');
   });
 
   it('accepts a narrower race list', () => {

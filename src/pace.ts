@@ -22,14 +22,19 @@ export function formatPace(totalSeconds: number): string {
 }
 
 const SECONDS_PER_HOUR = 3600;
-const SECONDS_PER_DAY = 86_400;
 
 /**
- * Always `h:mm:ss`, or `m:ss` under an hour — a form that parses back. The
- * calculator's time field is an input, so a value it can't re-read is a value
- * the user would have to retype.
+ * Format a finish time: `m:ss` for a 5K, `h:mm:ss` for a marathon, and hours
+ * that keep counting past a day for the ultras — 161:12:00, not 6d 17h.
+ *
+ * An ultra is timed in hours. That is how the results are published and how
+ * runners talk about them, and a day-and-hour reading throws away the minutes
+ * along the way. It also means every time on the tape parses back, which the
+ * calculator's time field depends on.
  */
 export function formatClock(totalSeconds: number): string {
+  // Rounded before the branch, not inside it: rounding after would let 3,599.5
+  // print as "59:60".
   const seconds = Math.round(totalSeconds);
 
   if (seconds < SECONDS_PER_HOUR) return formatPace(seconds);
@@ -37,23 +42,4 @@ export function formatClock(totalSeconds: number): string {
   const hours = Math.floor(seconds / SECONDS_PER_HOUR);
   const minutes = Math.floor((seconds % SECONDS_PER_HOUR) / 60);
   return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
-}
-
-/**
- * Format a finish time at the precision that distance deserves: `m:ss` for a
- * 5K, `h:mm:ss` for a marathon, and `Dd Hh` past a day — which is how anyone
- * running a 200-miler talks about their time anyway.
- */
-export function formatDuration(totalSeconds: number): string {
-  // Rounded before the branch, not inside it: 86,399.6 s is a day, and deciding
-  // that after formatting would print "23:59:60".
-  const seconds = Math.round(totalSeconds);
-
-  if (seconds >= SECONDS_PER_DAY) {
-    const days = Math.floor(seconds / SECONDS_PER_DAY);
-    const hours = Math.floor((seconds - days * SECONDS_PER_DAY) / SECONDS_PER_HOUR);
-    return `${days}d ${hours}h`;
-  }
-
-  return formatClock(seconds);
 }
