@@ -210,6 +210,27 @@ export function enableCalculator(panel: HTMLElement): () => void {
     recalculate();
   }
 
+  /**
+   * Rewrite a field in canonical form once it's left alone. A phone keypad has
+   * no colon, so a pace arrives as `530` or `5.30`; showing it back as `5:30`
+   * both matches the rest of the app and teaches the shorthand without needing
+   * a line of help text. Text that can't be read is left exactly as typed.
+   *
+   * On the way out, not while typing: rewriting mid-word would fight the cursor.
+   */
+  function onFocusOut(event: Event): void {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
+
+    const field = target.closest<HTMLElement>('.field')?.dataset.field as Field | undefined;
+    if (!field) return;
+
+    // Display-only: the canonical value is unchanged, so nothing is recomputed
+    // and the recency order stays where it was.
+    const canonical = read(field);
+    if (canonical !== null) target.value = display(field, canonical);
+  }
+
   function onUnitChange(event: Event): void {
     const forPace = event.target === paceUnit;
 
@@ -231,12 +252,15 @@ export function enableCalculator(panel: HTMLElement): () => void {
   }
 
   panel.addEventListener('input', onInput);
+  // focusout, not blur: blur doesn't bubble to the panel.
+  panel.addEventListener('focusout', onFocusOut);
   paceUnit.addEventListener('change', onUnitChange);
   distanceUnit.addEventListener('change', onUnitChange);
   recalculate();
 
   return () => {
     panel.removeEventListener('input', onInput);
+    panel.removeEventListener('focusout', onFocusOut);
     paceUnit.removeEventListener('change', onUnitChange);
     distanceUnit.removeEventListener('change', onUnitChange);
   };

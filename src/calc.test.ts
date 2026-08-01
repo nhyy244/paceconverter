@@ -44,6 +44,31 @@ describe('parsePaceInput', () => {
   it('rejects zero, which is not a pace', () => {
     expect(parsePaceInput('0:00')).toBeNull();
   });
+
+  /**
+   * A phone's numeric keypad has no colon key, so a pace typed on one has to
+   * arrive some other way. Both of these are what people actually reach for.
+   */
+  it('takes the decimal separator the keypad does have as a colon', () => {
+    expect(parsePaceInput('5.30')).toBe(330);
+    expect(parsePaceInput('5,30')).toBe(330);
+  });
+
+  it('reads bare digits, last two as seconds', () => {
+    expect(parsePaceInput('530')).toBe(330);
+    expect(parsePaceInput('1230')).toBe(750); // 12:30
+  });
+
+  it('still reads one or two bare digits as whole minutes', () => {
+    // `45` is a 45-minute-per-km hike, not 45 seconds per km.
+    expect(parsePaceInput('5')).toBe(300);
+    expect(parsePaceInput('45')).toBe(2700);
+    expect(parsePaceInput('4500')).toBe(2700);
+  });
+
+  it('rejects bare digits whose seconds field is impossible', () => {
+    expect(parsePaceInput('5999')).toBeNull();
+  });
 });
 
 describe('parseDurationInput', () => {
@@ -69,6 +94,17 @@ describe('parseDurationInput', () => {
 
   it('rejects sixty in a sixtieths field', () => {
     expect(parseDurationInput('1:60:00')).toBeNull();
+  });
+
+  it('takes the keypad separator as a colon here too', () => {
+    expect(parseDurationInput('1.56.02')).toBe(6962);
+    expect(parseDurationInput('56,02')).toBe(3362);
+  });
+
+  it('reads bare digits from the right', () => {
+    expect(parseDurationInput('15602')).toBe(6962); // 1:56:02
+    expect(parseDurationInput('5602')).toBe(3362); // 56:02
+    expect(parseDurationInput('45')).toBe(2700); // 45 minutes, as before
   });
 });
 

@@ -67,6 +67,23 @@ the normal state of a form, not an error.
 - `parseDistanceInput(text)` → a number in the field's unit. Accepts `.` or `,`
   as the decimal separator, since a decimal comma is what half of Europe types.
 
+**Typing a pace without a colon** (added 2026-08-01, after the first version
+shipped). `inputmode="decimal"` gets a phone to show its numeric keypad — which
+has no colon key, making `5:30` untypeable on a phone. The colon is not
+negotiable as the *display* form, so the parsers widen instead:
+
+- The decimal separator stands in for a colon in the pace and time fields:
+  `5.30` and `5,30` both read as 5:30. There is nothing for a decimal point to
+  mean in `m:ss`, so this is unambiguous. The distance field is the other way
+  round and still reads `.` and `,` as a decimal point.
+- Three or more bare digits group from the right, which is how a keypad gets
+  used: `530` → 5:30, `15602` → 1:56:02. One or two digits stay whole minutes,
+  so `45` remains a 45-minute 10K rather than becoming 45 seconds.
+- On `focusout` the field is rewritten in canonical form, so `530` visibly
+  becomes `5:30`. That keeps the panel consistent with the tape and teaches the
+  shorthand without a line of help text. Rewriting happens on the way out, never
+  mid-word, where it would fight the cursor. Unreadable text is left as typed.
+
 ### The solver
 
 ```ts

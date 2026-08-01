@@ -43,35 +43,59 @@ export function fromSecPerKm(secPerKm: number, unit: PaceUnit): number {
 }
 
 /**
+ * `:` is the canonical separator, but a phone's numeric keypad has no colon
+ * key at all — so the decimal separator it does have stands in for one. A pace
+ * has no decimal meaning in m:ss, so there is nothing for `.` to be confused
+ * with here. (The distance field is the other way round, and still reads `.`
+ * and `,` as a decimal point.)
+ */
+const SEPARATORS = /[:.,]/;
+
+/**
+ * Split bare digits into clock fields from the right, which is how anyone types
+ * a time on a keypad: `530` is 5:30, `15602` is 1:56:02. One or two digits are
+ * left as whole minutes — `45` is a 45-minute 10K, not 45 seconds.
+ */
+function digitGroups(digits: string, maxParts: number): number[] {
+  const groups: number[] = [];
+  let rest = digits;
+  while (rest.length > 2 && groups.length < maxParts - 1) {
+    groups.unshift(Number(rest.slice(-2)));
+    rest = rest.slice(0, -2);
+  }
+  groups.unshift(Number(rest));
+  return groups;
+}
+
+/**
  * Split clock text into its parts. Every field after the first counts a
  * sixtieth, so anything over 59 there is a typo rather than a big number.
  */
-function clockParts(text: string): number[] | null {
+function clockParts(text: string, maxParts: number): number[] | null {
   const trimmed = text.trim();
   if (trimmed === '') return null;
 
-  const parts: number[] = [];
-  for (const part of trimmed.split(':')) {
-    if (!/^\d+$/.test(part)) return null;
-    parts.push(Number(part));
-  }
+  const parts = /^\d+$/.test(trimmed) && trimmed.length > 2
+    ? digitGroups(trimmed, maxParts)
+    : trimmed.split(SEPARATORS).map((part) => (/^\d+$/.test(part) ? Number(part) : NaN));
 
+  if (parts.some(Number.isNaN)) return null;
   if (parts.slice(1).some((part) => part > 59)) return null;
   return parts;
 }
 
-/** `5:30` → 330, `5` → 300. Null for anything that isn't a pace. */
+/** `5:30` → 330, `5.30` → 330, `530` → 330, `5` → 300. */
 export function parsePaceInput(text: string): number | null {
-  const parts = clockParts(text);
+  const parts = clockParts(text, 2);
   if (!parts || parts.length > 2) return null;
 
   const total = parts[0] * 60 + (parts[1] ?? 0);
   return total > 0 ? total : null;
 }
 
-/** `1:56:04` → 6964, `56:04` → 3364, `45` → 2700. */
+/** `1:56:04` → 6964, `15604` → 6964, `56:04` → 3364, `45` → 2700. */
 export function parseDurationInput(text: string): number | null {
-  const parts = clockParts(text);
+  const parts = clockParts(text, 3);
   if (!parts || parts.length > 3) return null;
 
   // Read from the right: the last field is always the smallest unit present.

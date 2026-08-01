@@ -25,6 +25,10 @@ function choose(name: string, value: string): void {
   select.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
+function leave(name: string): void {
+  field(name).dispatchEvent(new Event('focusout', { bubbles: true }));
+}
+
 function computed(): string | undefined {
   return panel.querySelector<HTMLElement>('.field.computed')?.dataset.field;
 }
@@ -188,6 +192,62 @@ describe('changing units', () => {
     expect(computed()).toBe('pace');
     choose('pace', 'mi');
     expect(field('pace').value).toBe('8:51');
+  });
+});
+
+/**
+ * A phone's numeric keypad has no colon, so the panel has to accept a pace some
+ * other way and then show it back in the form the rest of the app uses.
+ */
+describe('typing on a keypad', () => {
+  it('solves from a pace typed as bare digits', () => {
+    type('pace', '530');
+    type('distance', '10');
+    expect(field('time').value).toBe('55:00');
+  });
+
+  it('solves from a pace typed with the keypad separator', () => {
+    type('pace', '5.30');
+    type('distance', '10');
+    expect(field('time').value).toBe('55:00');
+  });
+
+  it('tidies bare digits into a colon on the way out', () => {
+    type('pace', '530');
+    leave('pace');
+    expect(field('pace').value).toBe('5:30');
+  });
+
+  it('tidies the separator into a colon too', () => {
+    type('pace', '5.30');
+    leave('pace');
+    expect(field('pace').value).toBe('5:30');
+  });
+
+  it('tidies a time typed as bare digits', () => {
+    type('time', '15602');
+    leave('time');
+    expect(field('time').value).toBe('1:56:02');
+  });
+
+  it('tidies a half-typed distance', () => {
+    type('distance', '21,0975');
+    leave('distance');
+    expect(field('distance').value).toBe('21.098');
+  });
+
+  it('leaves text it cannot read exactly as typed', () => {
+    type('pace', 'soon');
+    leave('pace');
+    expect(field('pace').value).toBe('soon');
+  });
+
+  it('does not change which field is the answer', () => {
+    type('pace', '530');
+    type('distance', '10');
+    expect(computed()).toBe('time');
+    leave('pace');
+    expect(computed()).toBe('time');
   });
 });
 
