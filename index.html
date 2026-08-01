@@ -26,24 +26,64 @@
         <h1>Pace Converter</h1>
         <p>Every row is one pace. Read across for miles, and for what that pace means at every distance from a 5K to a 300&#8209;mile ultra.</p>
       </header>
-      <main class="plate" id="plate">
-        <span class="pin" aria-hidden="true"></span>
-        <span class="pin pin-right" aria-hidden="true"></span>
-        <div
-          id="tape"
-          class="tape"
-          role="table"
-          tabindex="0"
-          aria-label="Pace ruler from 1:30 to 20:00 minutes per kilometer, with finish times for each race distance. Drag it in any direction, or use the arrow keys."
+      <div class="plate-wrap">
+        <main class="plate" id="plate">
+          <span class="pin" aria-hidden="true"></span>
+          <span class="pin pin-right" aria-hidden="true"></span>
+          <div class="views">
+            <div
+              id="tape"
+              class="tape"
+              role="table"
+              tabindex="0"
+              aria-label="Pace ruler from 1:30 to 20:00 minutes per kilometer, with finish times for each race distance. Drag it in any direction, or use the arrow keys."
+            >
+              <header class="head" id="head" role="row"></header>
+            </div>
+            <div id="calc" class="calc"></div>
+          </div>
+          <noscript>
+            <p class="fallback">
+              The ruler is built in the browser, so it needs JavaScript enabled.
+            </p>
+          </noscript>
+        </main>
+        <!--
+          Outside the plate, which clips its own overflow so the tape's corners
+          stay rounded — and would clip a button straddling its edge. Hidden
+          until the script that gives it a second view to swap to has run.
+
+          The glyph is two 170° arcs of a radius-7 circle centred on (12, 12),
+          each with a chevron head, rotationally symmetric about that centre:
+          two arrows chasing each other round.
+        -->
+        <button
+          id="swap"
+          class="swap"
+          type="button"
+          hidden
+          aria-controls="tape calc"
+          aria-label="Change to calculator"
+          data-tip="Change to calculator"
         >
-          <header class="head" id="head" role="row"></header>
-        </div>
-        <noscript>
-          <p class="fallback">
-            The ruler is built in the browser, so it needs JavaScript enabled.
-          </p>
-        </noscript>
-      </main>
+          <span class="swap-disc">
+            <svg class="swap-glyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <g
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M5.03 12.61A7 7 0 0 1 18.76 10.19" />
+                <path d="M16.16 8.01 18.76 10.19 19.92 6.99" />
+                <path d="M18.97 11.39A7 7 0 0 1 5.24 13.81" />
+                <path d="M7.84 15.99 5.24 13.81 4.08 17.01" />
+              </g>
+            </svg>
+          </span>
+        </button>
+      </div>
       <footer class="footnote">
         <p>
           Ultra distances follow each organizer's
