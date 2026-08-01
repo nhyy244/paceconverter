@@ -7,9 +7,20 @@
     <meta name="theme-color" content="#2F5BD6" media="(prefers-color-scheme: dark)" />
     <meta name="description" content="Running pace ruler — min/km and min/mi side by side, with finish times for every race from a 5K to a 300-mile ultra." />
     <!--
-      A runner mid-stride in the bib's blue, no tile behind it. Round-capped
-      strokes keep the limbs solid down to 16 px; two speed lines, not three,
-      because a third merges into a smudge at that size.
+      Two declarations of the same runner, because they serve different readers.
+
+      This one first: a real raster file at a crawlable URL. Search engines will
+      not use the inline SVG below — there is no URL for them to fetch, and a
+      data URI is not a file. Google also looks for /favicon.ico by convention
+      when it can't find anything else, so this lives at exactly that path.
+      Contains 16, 32 and 48 px; 48 is the size Google asks for.
+    -->
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <!--
+      And this one for browsers, which prefer it: a runner mid-stride in the
+      bib's blue, no tile behind it. Round-capped strokes keep the limbs solid
+      down to 16 px; two speed lines, not three, because a third merges into a
+      smudge at that size.
 
       Inline rather than a file so the tab icon costs no request. Single-quoted
       attributes keep the escaping to <, > and #.
@@ -20,7 +31,7 @@
       used as an icon, media queries included, and a browser that ignores the
       query simply keeps the bib blue.
     -->
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cstyle%3E.i{stroke:%231749c8;fill:none}.d{fill:%231749c8}@media (prefers-color-scheme:dark){.i{stroke:%23a7bcf0}.d{fill:%23a7bcf0}}%3C/style%3E%3Cg transform='translate(1.123 -2.33) scale(1.109)'%3E%3Cg class='i' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke-width='4.2'%3E%3Cpath d='M18.4 12.8L15.2 18.8'/%3E%3Cpath d='M15.2 18.8L11.4 21.6L7.4 25.2'/%3E%3Cpath d='M15.2 18.8L19.8 21.8L21.8 26.6'/%3E%3C/g%3E%3Cg stroke-width='3.55'%3E%3Cpath d='M18.4 12.8L15 16L11.6 17.4'/%3E%3Cpath d='M18.4 12.8L22.2 15.4L24.8 13'/%3E%3C/g%3E%3Cg stroke-width='3.1'%3E%3Cpath d='M2.4 12.6L7 12.6'/%3E%3Cpath d='M1.8 17.4L6.2 17.4'/%3E%3C/g%3E%3C/g%3E%3Ccircle class='d' cx='20.6' cy='7.4' r='3.05'/%3E%3C/g%3E%3C/svg%3E" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cstyle%3E.i{stroke:%231749c8;fill:none}.d{fill:%231749c8}@media (prefers-color-scheme:dark){.i{stroke:%23a7bcf0}.d{fill:%23a7bcf0}}%3C/style%3E%3Cg transform='translate(1.123 -2.33) scale(1.109)'%3E%3Cg class='i' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke-width='4.2'%3E%3Cpath d='M18.4 12.8L15.2 18.8'/%3E%3Cpath d='M15.2 18.8L11.4 21.6L7.4 25.2'/%3E%3Cpath d='M15.2 18.8L19.8 21.8L21.8 26.6'/%3E%3C/g%3E%3Cg stroke-width='3.55'%3E%3Cpath d='M18.4 12.8L15 16L11.6 17.4'/%3E%3Cpath d='M18.4 12.8L22.2 15.4L24.8 13'/%3E%3C/g%3E%3Cg stroke-width='3.1'%3E%3Cpath d='M2.4 12.6L7 12.6'/%3E%3Cpath d='M1.8 17.4L6.2 17.4'/%3E%3C/g%3E%3C/g%3E%3Ccircle class='d' cx='20.6' cy='7.4' r='3.05'/%3E%3C/g%3E%3C/svg%3E" />
     <!--
       iOS ignores an SVG icon when a page is saved to the home screen, and fills
       any transparency in the PNG with black — which a blue runner would vanish
