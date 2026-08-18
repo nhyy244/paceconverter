@@ -11,20 +11,24 @@ describe('RACES', () => {
       'MARATHON',
       '50K',
       '100K',
+      'BIGFOOT 200',
       'TAHOE 200',
       'MOAB 240',
-      'BIGFOOT 200',
       'ARIZONA 300',
     ]);
+  });
 
-    // The standard distances climb; the ultras then follow in the order they
-    // were asked for, which is not by course length — Bigfoot's course is
-    // shorter than Moab's despite the bigger number in Moab's name.
-    const standard = RACES.filter((race) => !race.info).map((race) => race.km);
-    expect([...standard].sort((a, b) => a - b)).toEqual(standard);
-    expect(Math.min(...RACES.filter((race) => race.info).map((race) => race.km))).toBeGreaterThan(
-      Math.max(...standard),
-    );
+  /**
+   * Every column is further than the one to its left, ultras included — so the
+   * tape reads as one continuous ruler rather than a sorted list with four
+   * arbitrary columns bolted on the end.
+   *
+   * Worth pinning because course length and race name disagree: Bigfoot 200 is
+   * shorter than Tahoe 200, and the names give no clue which way round.
+   */
+  it('climbs in course length the whole way across', () => {
+    const km = RACES.map((race) => race.km);
+    expect([...km].sort((a, b) => a - b)).toEqual(km);
   });
 
   it('uses the official standard distances', () => {
@@ -45,9 +49,9 @@ describe('RACES', () => {
   it('documents each ultra with a summary and an organizer link', () => {
     const ultras = RACES.filter((race) => race.info);
     expect(ultras.map((race) => race.id)).toEqual([
+      'bigfoot200',
       'tahoe200',
       'moab240',
-      'bigfoot200',
       'arizona300',
     ]);
 

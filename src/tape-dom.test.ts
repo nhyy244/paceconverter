@@ -75,9 +75,9 @@ describe('renderHeader', () => {
     const buttons = Array.from(el.querySelectorAll('button.info')) as HTMLElement[];
 
     expect(buttons.map((button) => button.dataset.race)).toEqual([
+      'bigfoot200',
       'tahoe200',
       'moab240',
-      'bigfoot200',
       'arizona300',
     ]);
     for (const button of buttons) {
